@@ -31,6 +31,7 @@ const allLanguages = [
 
 // Liked Songs
 let likedSongs = JSON.parse(localStorage.getItem('likedSongs')) || [];
+let recentSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
 
 function toggleLike(song) {
     const index = likedSongs.findIndex(s => s.id === song.id);
@@ -98,6 +99,10 @@ function setupEventListeners() {
 
     // Back Button
     const backBtn = document.getElementById('nav-back-btn');
+    if (backBtn) backBtn.addEventListener('click', goBack);
+
+    const albumBackBtn = document.getElementById('album-back-btn');
+    if (albumBackBtn) albumBackBtn.addEventListener('click', goBack);
     if (backBtn) {
         backBtn.addEventListener('click', goBack);
     }
@@ -229,15 +234,89 @@ function setupEventListeners() {
     });
 
     // Search
+    // Search Inputs (Desktop & Mobile)
+    // Search Inputs (Desktop & Mobile)
+    // Search Inputs (Desktop & Mobile)
     const searchInput = document.getElementById('search-input');
-    searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        if (query.length > 0) {
-            handleSearch(query);
-        } else {
-            showView('home');
+    const mobileSearchInput = document.getElementById('search-input-mobile');
+
+    // Desktop Search Input Logic
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const clearBtn = document.getElementById('desktop-search-clear');
+
+            // Toggle Clear Button
+            if (clearBtn) clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+
+            if (window.innerWidth > 768) {
+                // Desktop: Dropdown Logic
+                renderDesktopSearch(query);
+            } else {
+                // Should not happen if mobile input is separate, but just in case
+                // mobile focus logic handles it.
+            }
+        });
+
+        // Toggle dropdown on focus
+        searchInput.addEventListener('focus', (e) => {
+            if (window.innerWidth > 768) {
+                const dropdown = document.getElementById('search-dropdown');
+                if (dropdown) dropdown.style.display = 'block';
+                renderDesktopSearch(searchInput.value);
+            } else {
+                e.target.blur();
+                openSearchOverlay();
+            }
+        });
+
+        // Hide on blur (with delay for clicks)
+        document.addEventListener('click', (e) => {
+            const container = document.querySelector('.search-bar-container');
+            if (container && !container.contains(e.target)) {
+                const dropdown = document.getElementById('search-dropdown');
+                if (dropdown) dropdown.style.display = 'none';
+            }
+        });
+
+        const clearBtn = document.getElementById('desktop-search-clear');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                searchInput.focus();
+                renderDesktopSearch('');
+                clearBtn.style.display = 'none';
+            });
         }
-    });
+    }
+
+    // Mobile Search Input Logic (Opens Overlay)
+    if (mobileSearchInput) {
+        mobileSearchInput.addEventListener('focus', (e) => {
+            e.target.blur(); // Prevent default mobile keyboard on main page
+            openSearchOverlay();
+        });
+    }
+
+    // Overlay Elements
+    const overlayInput = document.getElementById('overlay-search-input');
+    const overlayBackBtn = document.getElementById('search-back-btn');
+    const overlayClearBtn = document.getElementById('overlay-clear-btn');
+
+    if (overlayInput) {
+        overlayInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            handleOverlaySearch(query);
+        });
+    }
+
+    if (overlayBackBtn) {
+        overlayBackBtn.addEventListener('click', closeSearchOverlay);
+    }
+
+    if (overlayClearBtn) {
+        overlayClearBtn.addEventListener('click', clearRecent);
+    }
 
     // Playlist Creation
     document.getElementById('create-playlist-btn').addEventListener('click', (e) => {
@@ -728,6 +807,26 @@ function openAlbum(album) {
         }
     };
 
+    // Shuffle Button Logic
+    const shuffleBtn = document.getElementById('ab-shuffle-btn');
+    if (shuffleBtn) shuffleBtn.onclick = () => {
+        if (displaySongs.length > 0) {
+            currentPlaylist = displaySongs;
+            isShuffleOn = true;
+
+            // Sync Main Player Shuffle State
+            const mainShuf = document.getElementById('shuffle-btn');
+            if (mainShuf) {
+                mainShuf.classList.add('active');
+                mainShuf.style.color = 'var(--primary-color)';
+            }
+
+            // Play Random Song
+            currentSongIndex = Math.floor(Math.random() * displaySongs.length);
+            playSong(displaySongs[currentSongIndex]);
+        }
+    };
+
     // Add Button
     const addBtn = document.getElementById('ab-add-btn');
     if (addBtn) addBtn.onclick = () => {
@@ -1190,17 +1289,50 @@ function playPrev() {
 }
 
 // Search Logic
-function handleSearch(query) {
-    showView('search');
+// Search Logic - Overlay Version
+function openSearchOverlay() {
+    const overlay = document.getElementById('search-overlay');
+    const input = document.getElementById('overlay-search-input');
 
-    // Ensure container is visible
-    const container = document.getElementById('search-results-container');
-    if (container) container.style.display = 'block';
+    if (overlay) {
+        overlay.style.display = 'flex';
+        renderOverlayRecentSearches();
+        if (input) input.focus();
+    }
+}
 
-    const grid = document.getElementById('search-results-grid');
+function closeSearchOverlay() {
+    const overlay = document.getElementById('search-overlay');
+    if (overlay) overlay.style.display = 'none';
+
+    // Optional: Clear input or reset view?? Matches spotify behavior to keep state or reset?
+    // Let's keep it simple.
+}
+
+function handleOverlaySearch(query) {
+    const recentContainer = document.getElementById('overlay-recent-container');
+    const resultsContainer = document.getElementById('overlay-results-container');
+    const grid = document.getElementById('overlay-results-grid');
+
+    if (!query || query.trim() === '') {
+        // Show Recent
+        if (recentContainer) recentContainer.style.display = 'block';
+        if (resultsContainer) resultsContainer.style.display = 'none';
+        renderOverlayRecentSearches();
+        return;
+    }
+
+    // Show Results
+    if (recentContainer) recentContainer.style.display = 'none';
+    if (resultsContainer) resultsContainer.style.display = 'block';
+
     grid.innerHTML = '';
 
-    const results = songs.filter(s => s.title.toLowerCase().includes(query) || s.artist.toLowerCase().includes(query));
+    const results = songs.filter(s =>
+        s.title.toLowerCase().includes(query) ||
+        s.artist.toLowerCase().includes(query) ||
+        (s.album && s.album.toLowerCase().includes(query))
+    );
 
     if (results.length === 0) {
         grid.innerHTML = '<div style="color:#888; padding:20px;">No results found</div>';
@@ -1208,9 +1340,136 @@ function handleSearch(query) {
     }
 
     results.forEach(song => {
-        const card = createCard(song.title, song.artist, song.cover, () => playSong(song));
-        grid.appendChild(card);
+        // Create List Row for Mobile Overlay results
+        const div = document.createElement('div');
+        div.className = 'search-result-row'; // New class for results
+        div.innerHTML = `
+            <div class="recent-img-container ${song.type === 'Artist' ? 'round' : ''}">
+                <img src="${song.cover || song.image}" class="recent-img">
+            </div>
+            <div class="recent-info">
+                <div class="recent-title" style="${song.id === ((window.audio && window.audio.dataset.currentSongId) ? 'color:#1db954;' : '')}">${song.title || song.name}</div>
+                <div class="recent-subtitle">${song.type || 'Song'} ${song.artist ? '• ' + song.artist : ''}</div>
+            </div>
+            <div class="search-item-dots"><i class="fa-solid fa-ellipsis-vertical"></i></div>
+        `;
+
+        div.addEventListener('click', (e) => {
+            // Logic for dots if needed later
+            if (e.target.closest('.search-item-dots')) {
+                e.stopPropagation();
+                // Context menu or action
+                return;
+            }
+
+            addToRecent(song);
+
+            if (song.type === 'Song' || !song.type) {
+                playSong(song);
+                // Optionally close overlay? Or keep open? Spotify keeps open.
+            } else if (song.type === 'Artist') {
+                openArtistPage(song.name);
+                closeSearchOverlay();
+            } else if (song.type === 'Album') {
+                openAlbum(song);
+                closeSearchOverlay();
+            }
+        });
+
+        grid.appendChild(div);
     });
+}
+
+function renderOverlayRecentSearches() {
+    const list = document.getElementById('overlay-recent-list');
+
+    if (!list) return; // Guard
+
+    if (recentSearches.length === 0) {
+        list.innerHTML = '<div style="color:#666; font-size:14px; padding:10px 0;">No recent searches</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+
+    recentSearches.slice(0, 10).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'recent-search-item';
+        div.innerHTML = `
+            <div class="recent-img-container ${item.type === 'Artist' ? 'round' : ''}">
+                <img src="${item.cover || item.image}" class="recent-img">
+            </div>
+            <div class="recent-info">
+                <div class="recent-title" style="${item.id === ((window.audio && window.audio.dataset.currentSongId) ? 'color:#1db954;' : '')}">${item.title || item.name}</div>
+                <div class="recent-subtitle">${item.type || 'Song'} ${item.artist ? '• ' + item.artist : ''}</div>
+            </div>
+            <button class="recent-item-remove"><i class="fa-solid fa-xmark"></i></button>
+        `;
+
+        div.addEventListener('click', (e) => {
+            if (e.target.closest('.recent-item-remove')) {
+                e.stopPropagation();
+                removeFromRecent(item.id);
+                return;
+            }
+
+            if (item.type === 'Song' || !item.type) {
+                playSong(item);
+            } else if (item.type === 'Artist') {
+                openArtistPage(item.name);
+                closeSearchOverlay();
+            } else if (item.type === 'Album') {
+                openAlbum(item);
+                closeSearchOverlay();
+            }
+        });
+
+        list.appendChild(div);
+    });
+}
+
+// Reuse addToRecent/removeFromRecent from before... or ensure they update overlay
+function addToRecent(item) {
+    // Remove if exists (to bump to top)
+    const index = recentSearches.findIndex(i => i.id === item.id);
+    if (index > -1) {
+        recentSearches.splice(index, 1);
+    }
+
+    // Add to front
+    // Normalize data slightly to ensure we have what we need
+    const recentItem = {
+        id: item.id,
+        title: item.title || item.name,
+        artist: item.artist,
+        cover: item.cover || item.image,
+        type: item.type || (item.name ? 'Artist' : 'Song') // Basic inference
+    };
+
+    recentSearches.unshift(recentItem);
+
+    // Limit to 10
+    if (recentSearches.length > 20) recentSearches.pop();
+
+    localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+
+    // Refresh Overlay
+    renderOverlayRecentSearches();
+}
+
+function removeFromRecent(id) {
+    const index = recentSearches.findIndex(i => i.id === id);
+    if (index > -1) {
+        recentSearches.splice(index, 1);
+        localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+        renderOverlayRecentSearches();
+    }
+}
+
+function clearRecent() {
+    recentSearches = [];
+    localStorage.removeItem('recentSearches');
+    renderOverlayRecentSearches();
 }
 
 // === Context Menu Logic ===
@@ -2874,4 +3133,136 @@ function updateMobileProgress() {
         if (durTime) durTime.innerText = formatTime(duration);
     }
 }
+
+// Mobile Player UI Updater
+function updateMobilePlayerUI() {
+    const song = songs[currentSongIndex];
+    if (!song) return;
+
+    // Artwork
+    const img = document.getElementById('mobile-player-img');
+    if (img) img.src = song.cover || song.image;
+
+    // Title & Artist
+    const title = document.getElementById('mobile-player-title');
+    if (title) title.innerText = song.title || song.name;
+
+    const artist = document.getElementById('mobile-player-artist');
+    if (artist) artist.innerText = song.artist;
+
+    // Play Button
+    const playBtn = document.getElementById('mobile-play-btn');
+    if (playBtn) {
+        playBtn.innerHTML = !audio.paused ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+    }
+
+    // Like Button
+    const likeBtn = document.getElementById('mobile-like-btn');
+    if (likeBtn) {
+        const liked = isLiked(song.id);
+        likeBtn.innerHTML = liked ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
+        likeBtn.style.color = liked ? 'var(--primary-color)' : 'white';
+    }
+
+    // Shuffle/Loop
+    const shufBtn = document.getElementById('mobile-shuffle-btn');
+    if (shufBtn) {
+        shufBtn.style.color = isShuffleOn ? 'var(--primary-color)' : 'white';
+    }
+
+    const loopBtn = document.getElementById('mobile-loop-btn');
+    if (loopBtn) {
+        loopBtn.style.color = audio.loop ? 'var(--primary-color)' : 'white';
+    }
+
+    // Initial Progress
+    updateMobileProgress();
+}
+
+// Desktop Search Dropdown Renderer
+function renderDesktopSearch(query) {
+    const dropdown = document.getElementById('search-dropdown');
+    if (!dropdown) return;
+
+    dropdown.style.display = 'block';
+    dropdown.innerHTML = '';
+
+    let itemsToRender = [];
+
+    if (!query || query.trim() === '') {
+        // Show Recent Searches
+        itemsToRender = recentSearches.slice(0, 5);
+        if (itemsToRender.length === 0) {
+            dropdown.innerHTML = '<div style="padding:15px; color:#888; font-size:13px; text-align:center;">No recent searches</div>';
+            return;
+        }
+        // Maybe add a header "Recent"
+    } else {
+        // Filter Songs
+        itemsToRender = songs.filter(s =>
+            s.title.toLowerCase().includes(query.toLowerCase()) ||
+            s.artist.toLowerCase().includes(query.toLowerCase())
+        ).slice(0, 8); // Limit to 8
+
+        if (itemsToRender.length === 0) {
+            dropdown.innerHTML = '<div style="padding:15px; color:#888; font-size:13px; text-align:center;">No results found</div>';
+            return;
+        }
+    }
+
+    itemsToRender.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'desktop-search-item';
+        div.innerHTML = `
+            <img src="${item.cover || item.image}" class="desktop-search-img ${item.type === 'Artist' ? 'round' : ''}">
+            <div class="desktop-search-info">
+                <div class="desktop-item-title">${item.title || item.name}</div>
+                <div class="desktop-item-subtitle">${item.type || 'Song'} • ${item.artist || ''}</div>
+            </div>
+            <button class="desktop-item-add" title="Add to Library"><i class="fa-solid fa-circle-plus"></i></button>
+        `;
+
+        div.addEventListener('click', (e) => {
+            if (e.target.closest('.desktop-item-add')) {
+                e.stopPropagation();
+                // Add to liked songs / library logic
+                toggleLike(item);
+                // Visual feedback?
+                const btn = e.target.closest('.desktop-item-add');
+                if (btn) btn.style.color = '#1db954';
+                return;
+            }
+
+            addToRecent(item);
+            if (item.type === 'Song' || !item.type) {
+                playSong(item);
+            } else if (item.type === 'Artist') {
+                openArtistPage(item.name);
+            } else if (item.type === 'Album') {
+                openAlbum(item);
+            }
+            dropdown.style.display = 'none';
+        });
+
+        dropdown.appendChild(div);
+    });
+}
+
+// Ensure Mini Player opens Full Screen on Click
+document.addEventListener('DOMContentLoaded', () => {
+    const miniPlayer = document.querySelector('.now-playing-mini');
+    if (miniPlayer) {
+        miniPlayer.addEventListener('click', (e) => {
+            // Avoid triggering if clicked on buttons inside (play/like)
+            if (e.target.closest('button')) return;
+
+            // Open Mobile Player Overlay
+            const overlay = document.getElementById('mobile-player-overlay');
+            if (overlay) {
+                overlay.classList.add('open');
+                updateMobilePlayerUI();
+            }
+        });
+    }
+});
 
