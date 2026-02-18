@@ -2686,12 +2686,29 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 function initMobilePlayerLogic() {
     setupMobileFullPlayer();
 
-    // Hook into existing updates
-    // We hook into updateMiniPlayerUI to sync state changes (Play/Pause/Song Change)
+    // Hook into updateMiniPlayerUI
     if (typeof updateMiniPlayerUI === 'function') {
         const originalUpdateMiniPlayerUI = updateMiniPlayerUI;
         updateMiniPlayerUI = function () {
             originalUpdateMiniPlayerUI();
+            updateMobilePlayerUI();
+        };
+    }
+
+    // Hook into updatePlayerUI
+    if (typeof updatePlayerUI === 'function') {
+        const originalUpdatePlayerUI = updatePlayerUI;
+        updatePlayerUI = function (song) {
+            originalUpdatePlayerUI(song);
+            updateMobilePlayerUI();
+        };
+    }
+
+    // Hook into updatePlayButton
+    if (typeof updatePlayButton === 'function') {
+        const originalUpdatePlayButton = updatePlayButton;
+        updatePlayButton = function () {
+            originalUpdatePlayButton();
             updateMobilePlayerUI();
         };
     }
