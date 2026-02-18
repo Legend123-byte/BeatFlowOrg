@@ -63,9 +63,21 @@
                     </button>
                     <!-- Forward button could go here -->
                 </div>
-                <div class="search-bar">
-                    <i class="fa-solid fa-magnifying-glass" style="color: #aaa;"></i>
-                    <input type="text" id="search-input" placeholder="Search songs, albums...">
+                <div class="search-bar-container" style="position: relative;">
+                    <div class="search-bar">
+                        <i class="fa-solid fa-magnifying-glass search-icon" style="color: #aaa;"></i>
+                        <input type="text" id="search-input" placeholder="What do you want to play?">
+                        <div class="search-actions">
+                            <i class="fa-solid fa-xmark" id="desktop-search-clear"
+                                style="display:none; cursor: pointer; margin-right: 10px;"></i>
+                            <span style="border-left: 1px solid #555; height: 20px; margin: 0 10px;"></span>
+                            <i class="fa-solid fa-box-archive" title="Library"
+                                style="cursor: pointer; color: #aaa;"></i>
+                        </div>
+                    </div>
+                    <div id="search-dropdown" class="search-dropdown" style="display: none;">
+                        <!-- JS Injected Results -->
+                    </div>
                 </div>
                 <div class="top-actions" style="display: flex; align-items: center; gap: 20px;">
                     <button class="nav-btn-text">
@@ -190,6 +202,12 @@
 
             <!-- Album Details View -->
             <div id="album-view" class="view-section" style="display: none;">
+                <div class="mobile-album-nav mobile-only" style="padding: 10px 0; margin-bottom: 10px;">
+                    <button id="album-back-btn"
+                        style="background:none; border:none; color:white; font-size:16px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <i class="fa-solid fa-chevron-left"></i> Back
+                    </button>
+                </div>
                 <div class="album-header">
                     <img src="" alt="" class="album-cover-large" id="album-cover">
                     <div class="album-info-hero">
@@ -216,16 +234,27 @@
                             A</div>
                         <h2 style="margin:0; font-size: 24px;">Search</h2>
                     </div>
-                    <i class="fa-solid fa-camera" style="font-size: 24px;"></i>
                 </div>
 
                 <!-- Search Input Container (Mobile Style) -->
-                <div class="search-container-mobile" style="padding: 0 15px 20px 15px;">
-                    <div class="search-bar-mobile"
-                        style="background: white; border-radius: 4px; padding: 10px 15px; display: flex; align-items: center; gap: 10px;">
-                        <i class="fa-solid fa-magnifying-glass" style="color: black;"></i>
-                        <input type="text" id="search-input-mobile" placeholder="What do you want to listen to?"
-                            style="border: none; outline: none; flex: 1; font-size: 16px; color: black; font-weight: 500;">
+                <div class="search-container-mobile">
+                    <div class="search-bar-mobile">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-input-mobile" placeholder="Artists, Songs, Lyrics and more">
+                    </div>
+                </div>
+
+                <!-- Recent Searches (Hidden by default, shown on focus/empty search) -->
+                <div id="recent-searches-container" style="display: none; padding: 0 15px;">
+                    <div class="recent-header"
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 20px;">
+                        <h3 class="section-title" style="margin: 0; border: none; font-size: 18px;">Recently Searched
+                        </h3>
+                        <button id="clear-recent-btn"
+                            style="background: none; border: none; color: #b026ff; font-size: 14px; font-weight: 600; cursor: pointer;">Clear</button>
+                    </div>
+                    <div id="recent-list">
+                        <!-- JS Injected -->
                     </div>
                 </div>
 
@@ -413,7 +442,49 @@
                     class="fa-solid fa-expand"></i></button>
         </div>
     </div>
+    <!-- Mobile Full Screen Player Overlay -->
+    <div id="mobile-player-overlay">
+        <div class="mobile-player-header">
+            <button class="mobile-icon-btn" id="close-mobile-player"><i class="fa-solid fa-chevron-down"></i></button>
+            <div class="mobile-header-title">Now Playing</div>
+            <button class="mobile-icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+        </div>
 
+        <div class="mobile-player-artwork">
+            <img src="" id="mobile-player-img" alt="Album Art">
+        </div>
+
+        <div class="mobile-player-info">
+            <div class="mobile-track-details">
+                <h2 id="mobile-player-title">Title</h2>
+                <p id="mobile-player-artist">Artist</p>
+            </div>
+            <button id="mobile-like-btn" class="mobile-icon-btn"><i class="fa-regular fa-heart"></i></button>
+        </div>
+
+        <div class="mobile-player-progress">
+            <div class="mobile-progress-bar" id="mobile-progress-container">
+                <div class="progress-fill" id="mobile-progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="time-display">
+                <span id="mobile-curr-time">0:00</span>
+                <span id="mobile-dur-time">0:00</span>
+            </div>
+        </div>
+
+        <div class="mobile-player-controls">
+            <button class="mobile-control-btn" id="mobile-shuffle-btn"><i class="fa-solid fa-shuffle"></i></button>
+            <button class="mobile-control-btn" id="mobile-prev-btn"><i class="fa-solid fa-backward-step"></i></button>
+            <button class="mobile-play-circle" id="mobile-play-btn"><i class="fa-solid fa-play"></i></button>
+            <button class="mobile-control-btn" id="mobile-next-btn"><i class="fa-solid fa-forward-step"></i></button>
+            <button class="mobile-control-btn" id="mobile-loop-btn"><i class="fa-solid fa-repeat"></i></button>
+        </div>
+
+        <div class="mobile-player-footer">
+            <button class="mobile-footer-btn"><i class="fa-solid fa-share-nodes"></i></button>
+            <button class="mobile-footer-btn"><i class="fa-solid fa-list-ul"></i></button>
+        </div>
+    </div>
     <!-- Playlist Creation Dialog -->
     <div class="dialog-overlay" id="playlist-dialog">
         <div class="dialog">
@@ -440,6 +511,34 @@
                 <!-- JS Injected Options -->
             </div>
             <button id="update-lang-btn" class="update-btn">Update</button>
+        </div>
+    </div>
+
+    <!-- Full Screen Search Overlay -->
+    <div id="search-overlay" class="search-overlay" style="display: none;">
+        <div class="search-overlay-header">
+            <button id="search-back-btn" class="overlay-back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="overlay-input-wrapper">
+                <input type="text" id="overlay-search-input" placeholder="Artists, Songs, Lyrics and more">
+            </div>
+        </div>
+
+        <div class="search-overlay-content">
+            <!-- Recent Searches -->
+            <div id="overlay-recent-container">
+                <div class="recent-header">
+                    <h3 class="recent-title-text">Recently Searched</h3>
+                    <button id="overlay-clear-btn" class="clear-btn">Clear</button>
+                </div>
+                <div id="overlay-recent-list">
+                    <!-- JS Injected -->
+                </div>
+            </div>
+
+            <!-- Search Results -->
+            <div id="overlay-results-container" style="display: none;">
+                <div class="card-grid" id="overlay-results-grid"></div>
+            </div>
         </div>
     </div>
 
