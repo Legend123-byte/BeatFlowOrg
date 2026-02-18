@@ -236,23 +236,23 @@ const playlists = [
 const deepDiveContent = [
     // Panel 1: Neon City (EDM/Synth)
     [
-        { id: 101, title: "Neon City", artist: "Synthwave Boy", type: "Playlist", video: "V1.mp4", audio: "On My Way.mp3", desc: "Drive through the neon-soaked streets of 2084.", songs: [1, 7, 2] },
-        { id: 102, title: "Cyberpunk 2077", artist: "Future Cop", type: "Album", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", desc: "The official soundtrack of the dark future.", songs: [2, 6, 8] },
-        { id: 103, title: "Tech Noir", artist: "Gunship", type: "Album", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3", desc: "Cinematic synthwave for the modern age.", songs: [7, 1, 8] },
-        { id: 104, title: "Dark Synth", artist: "Carpenter Brut", type: "Playlist", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", desc: "Heavy beats and dark atmosphere.", songs: [8, 12, 6] },
-        { id: 105, title: "Night Drive", artist: "Kavinsky", type: "Playlist", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3", desc: "Cruising at night with synthwave classics.", songs: [6, 12, 3] }
+        { id: 101, title: "Neon City", artist: "Synthwave Boy", type: "Playlist", video: "https://raw.githubusercontent.com/Legend123-byte/Assests/main/Video/V2.mp4", audio: "On My Way.mp3", desc: "Drive through the neon-soaked streets of 2084.", songs: [1, 7, 2] },
+        { id: 102, title: "Cyberpunk 2077", artist: "Future Cop", type: "Album", video: "https://raw.githubusercontent.com/Legend123-byte/Assests/main/Video/V4.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", desc: "The official soundtrack of the dark future.", songs: [2, 6, 8] },
+        { id: 103, title: "Tech Noir", artist: "Gunship", type: "Album", video: "https://raw.githubusercontent.com/Legend123-byte/Assests/main/Video/V3.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3", desc: "Cinematic synthwave for the modern age.", songs: [7, 1, 8] },
+        { id: 104, title: "Dark Synth", artist: "Carpenter Brut", type: "Playlist", video: "https://raw.githubusercontent.com/Legend123-byte/Assests/main/Video/V5.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", desc: "Heavy beats and dark atmosphere.", songs: [8, 12, 6] },
+        { id: 105, title: "Night Drive", artist: "Kavinsky", type: "Playlist", video: "https://raw.githubusercontent.com/Legend123-byte/Assests/main/Video/V6.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3", desc: "Cruising at night with synthwave classics.", songs: [6, 12, 3] }
     ],
     // Panel 2: Retro Wave (Lo-fi/Chill)
     [
-        { id: 201, title: "Retro Wave", artist: "The Midnight", type: "Playlist", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", desc: "Relaxing synth beats for studying or coding.", songs: [3, 10, 9] },
-        { id: 202, title: "Chillwave", artist: "Home", type: "Album", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3", desc: "Nostalgic vibes and smooth textures.", songs: [9, 3, 10] },
-        { id: 203, title: "Sunset", artist: "The Midnight", type: "Album", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3", desc: "Golden hour vibes.", songs: [10, 3, 9] },
-        { id: 204, title: "After Dark", artist: "Mr. Kitty", type: "Album", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3", desc: "Late night emotional synthpop.", songs: [12, 6, 2] },
-        { id: 205, title: "Memories", artist: "Daft Punk", type: "Album", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3", desc: "A trip down memory lane.", songs: [11, 5, 2] }
+        { id: 201, title: "Retro Wave", artist: "The Midnight", type: "Playlist", video: "https://raw.githubusercontent.com/Legend123-byte/Assests/main/Video/V8.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", desc: "Relaxing synth beats for studying or coding.", songs: [3, 10, 9] },
+        { id: 202, title: "Chillwave", artist: "Home", type: "Album", video: "https://raw.githubusercontent.com/Legend123-byte/Assests/main/Video/V7.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3", desc: "Nostalgic vibes and smooth textures.", songs: [9, 3, 10] },
+        { id: 203, title: "Sunset", artist: "The Midnight", type: "Album", video: "https://raw.githubusercontent.com/Legend123-byte/Assests/main/Video/V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3", desc: "Golden hour vibes.", songs: [10, 3, 9] },
+        { id: 204, title: "After Dark", artist: "Mr. Kitty", type: "Album", video: "https://raw.githubusercontent.com/Legend123-byte/Assests/main/Video/V3.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3", desc: "Late night emotional synthpop.", songs: [12, 6, 2] },
+        { id: 205, title: "Memories", artist: "Daft Punk", type: "Album", video: "https://raw.githubusercontent.com/Legend123-byte/Assests/main/Video/V2.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3", desc: "A trip down memory lane.", songs: [11, 5, 2] }
     ],
     // Panel 3: Legends (Classic)
     [
-        { id: 301, title: "Purple Haze", artist: "Prince", type: "Artist Mix", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3", desc: "Deep dive into the legendary Prince discography.", songs: [4, 5, 11] },
+        { id: 301, title: "Purple Haze", artist: "Prince", type: "Artist Mix", video: "https://raw.githubusercontent.com/Legend123-byte/Assests/main/Video/V6.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3", desc: "Deep dive into the legendary Prince discography.", songs: [4, 5, 11] },
         { id: 302, title: "Starboy Era", artist: "The Weeknd", type: "Album", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3", desc: "The Weeknd's chart-topping hits from 2016.", songs: [5, 11, 2] },
         { id: 303, title: "French Touch", artist: "Daft Punk", type: "Playlist", video: "V1.mp4", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3", desc: "The robots who changed electronic music forever.", songs: [11, 5, 2] },
         { id: 304, title: "After Hours", artist: "The Weeknd", type: "Playlist", video: "https://media.istockphoto.com/id/1283681475/video/neon-light-tunnel.mp4?s=mp4-640x640-is&k=20&c=2-rG68eJ2eJ2gG2y2v2_2g2h2j2k2l2m2n2o2p2q2r2s=", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3", desc: "The late night saga continues.", songs: [5, 11] },
