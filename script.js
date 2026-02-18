@@ -1018,14 +1018,17 @@ function togglePlay() {
 }
 
 function updatePlayButton() {
+    const miniBtn = document.getElementById('mini-play-btn');
     if (isPlaying) {
         if (player.playBtn) player.playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        if (miniBtn) miniBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
         if (player.video) player.video.play().catch(e => console.log('Video play error', e));
 
         const rsVideo = document.getElementById('rs-loop-video');
         if (rsVideo) rsVideo.play().catch(e => console.error(e));
     } else {
         if (player.playBtn) player.playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        if (miniBtn) miniBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
         if (player.video) player.video.pause();
 
         const rsVideo = document.getElementById('rs-loop-video');
@@ -1192,6 +1195,11 @@ function playPrev() {
 // Search Logic
 function handleSearch(query) {
     showView('search');
+
+    // Ensure container is visible
+    const container = document.getElementById('search-results-container');
+    if (container) container.style.display = 'block';
+
     const grid = document.getElementById('search-results-grid');
     grid.innerHTML = '';
 
@@ -2431,3 +2439,425 @@ function updateMiniPlayerProgress(currentTime, duration) {
         fill.style.width = `${percent}%`;
     }
 }
+
+// Mobile Responsiveness Logic
+function setupMobileNavigation() {
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (!bottomNav) return;
+
+    const navItems = bottomNav.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = item.dataset.target;
+            if (target) {
+                // If dashboard/library, ensure logic
+                if (target === 'dashboard') {
+                    // Ensure we show library view, maybe specific filter?
+                    // Just showView('dashboard') is enough as per existing logic
+                    showView('dashboard');
+                } else if (target === 'search') {
+                    showView('search');
+                    setTimeout(() => {
+                        const input = document.getElementById('search-input');
+                        if (input) input.focus();
+                    }, 100);
+                } else {
+                    showView(target);
+                }
+
+                navItems.forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+            }
+        });
+    });
+}
+
+// Ensure mobile features are initialized
+document.addEventListener('DOMContentLoaded', () => {
+    // Run setup
+    setupMobileNavigation();
+
+    // Mobile Play Button Click Handler
+    const miniBtn = document.getElementById('mini-play-btn');
+    if (miniBtn) {
+        miniBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePlay();
+        });
+    }
+});
+
+// Since DOMContentLoaded might have already fired if script is loaded late or via SPA nav (though here it's simple auth),
+// we also call it immediately if ready.
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setupMobileNavigation();
+    const miniBtn = document.getElementById('mini-play-btn');
+    if (miniBtn) {
+        // Remove old listener if any to avoid duplicates? 
+        // Better to just add one. cloneNode trick or just rely on DOMContentLoaded not firing twice.
+        // Simple generic add is fine.
+        miniBtn.onclick = (e) => {
+            e.stopPropagation();
+            togglePlay();
+        };
+    }
+}
+
+// Mobile Search UI Rendering
+const browseCategories = {
+    start: [
+        { title: 'Music', color: '#E91429', img: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop' },
+        { title: 'Podcasts', color: '#006450', img: 'https://images.unsplash.com/photo-1478737270239-2f02b77ac6d5?w=300&h=300&fit=crop' },
+        { title: 'Live Events', color: '#8400E7', img: 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?w=300&h=300&fit=crop' },
+        { title: 'Home of I-Pop', color: '#142a63', img: 'https://images.unsplash.com/photo-1520166012956-add9ba0835bb?w=300&h=300&fit=crop' }
+    ],
+    browseAll: [
+        { title: 'Made For You', color: '#509BF5', img: 'https://images.unsplash.com/photo-1494232410401-ad00d5433cfa?w=300&h=300&fit=crop' },
+        { title: 'New Releases', color: '#E91429', img: 'https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=300&h=300&fit=crop' },
+        { title: 'Hindi', color: '#D84000', img: 'https://images.unsplash.com/photo-1626126525134-fbbc06b9b96c?w=300&h=300&fit=crop' },
+        { title: 'Punjabi', color: '#A56752', img: 'https://images.unsplash.com/photo-1559827291-72ee739d0d9a?w=300&h=300&fit=crop' },
+        { title: 'Tamil', color: '#B06239', img: 'https://images.unsplash.com/photo-1619983081563-430f63602796?w=300&h=300&fit=crop' },
+        { title: 'Telugu', color: '#E1118C', img: 'https://images.unsplash.com/photo-1621112904866-9aec03621ee5?w=300&h=300&fit=crop' },
+        { title: 'Charts', color: '#8D67AB', img: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop' },
+        { title: 'Pop', color: '#438270', img: 'https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=300&h=300&fit=crop' },
+        { title: 'Indie', color: '#E91429', img: 'https://images.unsplash.com/photo-1484876065684-b683cf17d276?w=300&h=300&fit=crop' },
+        { title: 'Trending', color: '#B02897', img: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300&h=300&fit=crop' },
+        { title: 'Love', color: '#E91429', img: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=300&h=300&fit=crop' },
+        { title: 'Discover', color: '#8D67AB', img: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=300&h=300&fit=crop' },
+        { title: 'Radio', color: '#509BF5', img: 'https://images.unsplash.com/photo-1585255318859-f5c15f4cffe9?w=300&h=300&fit=crop' },
+        { title: 'Mood', color: '#E1118C', img: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop' },
+        { title: 'Party', color: '#537AA1', img: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=300&h=300&fit=crop' },
+        { title: 'Dance', color: '#5179A1', img: 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?w=300&h=300&fit=crop' }
+    ]
+};
+
+function renderMobileSearch() {
+    const carousel = document.getElementById('browse-carousel');
+    const grid = document.getElementById('browse-all-grid');
+    if (!carousel || !grid) return;
+
+    // Render Carousel
+    carousel.innerHTML = browseCategories.start.map(item => `
+        <div class="browse-category-card" style="background-color: ${item.color}">
+            <span>${item.title}</span>
+            <img src="${item.img}" loading="lazy">
+        </div>
+    `).join('');
+
+    // Render Grid
+    grid.innerHTML = browseCategories.browseAll.map(item => `
+        <div class="browse-category-card" style="background-color: ${item.color}">
+            <span>${item.title}</span>
+            <img src="${item.img}" loading="lazy">
+        </div>
+    `).join('');
+
+    // Add Click Listeners (Mock)
+    document.querySelectorAll('.browse-category-card').forEach(card => {
+        card.addEventListener('click', () => {
+            // Mock interaction
+            console.log('Clicked category:', card.querySelector('span').innerText);
+        });
+    });
+}
+
+// Logic to toggle Search vs Browse
+function setupSearchToggle() {
+    const input = document.getElementById('search-input-mobile');
+    const browseContent = document.getElementById('search-browse-content');
+    const resultsContainer = document.getElementById('search-results-container');
+    const resultsGrid = document.getElementById('search-results-grid'); // Re-use main grid if needed or separate
+
+    if (!input) return;
+
+    input.addEventListener('input', (e) => {
+        const query = e.target.value.trim().toLowerCase();
+
+        if (query.length > 0) {
+            browseContent.style.display = 'none';
+            resultsContainer.style.display = 'block';
+
+            // Perform Search (Re-use existing logic logic)
+            const results = songs.filter(s => s.title.toLowerCase().includes(query) || s.artist.toLowerCase().includes(query));
+            resultsGrid.innerHTML = '';
+
+            if (results.length === 0) {
+                resultsGrid.innerHTML = '<div style="color:#888; padding:20px; text-align:center;">No songs found.</div>';
+            } else {
+                results.forEach(song => {
+                    const card = createCard(song.title, song.artist, song.cover, () => playSong(song));
+                    resultsGrid.appendChild(card);
+                });
+            }
+        } else {
+            browseContent.style.display = 'block';
+            resultsContainer.style.display = 'none';
+        }
+    });
+}
+
+// Mobile Deep Dive Rendering
+function renderMobileDeepDives() {
+    const carousel = document.getElementById('mobile-deep-dive-carousel');
+    if (!carousel || !deepDiveContent) return;
+
+    // Flatten deep dive groups for carousel
+    const allDeepDives = deepDiveContent.flat();
+
+    carousel.innerHTML = allDeepDives.map((item, index) => {
+        // Use video if available, or cover
+        const videoSrc = item.video || "";
+
+        return `
+        <div class="mobile-video-panel" data-index="${index}">
+            <div class="mobile-video-container" style="width:100%; height:100%;">
+                 <video src="${videoSrc}" loop muted playsinline preload="metadata" style="width:100%; height:100%; object-fit:cover;"></video>
+            </div>
+            <div class="mobile-panel-overlay">
+                <div class="panel-type" style="font-size: 10px; color: #1db954; font-weight:700; text-transform:uppercase;">${item.type}</div>
+                <div class="panel-title" style="font-size: 18px; margin-bottom: 5px; font-weight:700; color:white;">${item.title}</div>
+                <div class="panel-desc" style="font-size: 12px; color: #ccc; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${item.desc}</div>
+            </div>
+             <div style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 20px; font-size: 10px; display: flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-play"></i> Watch
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    // Add Click Listeners
+    carousel.querySelectorAll('.mobile-video-panel').forEach((panel, index) => {
+        panel.addEventListener('click', () => {
+            openDeepDivePage(allDeepDives[index]);
+        });
+    });
+
+    // Intersection Observer for Autoplay
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const video = entry.target.querySelector('video');
+            if (entry.isIntersecting) {
+                entry.target.classList.add('playing');
+                if (video) {
+                    const playPromise = video.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => { /**/ });
+                    }
+                }
+            } else {
+                entry.target.classList.remove('playing');
+                if (video) {
+                    video.pause();
+                    video.currentTime = 0;
+                }
+            }
+        });
+    }, {
+        root: carousel,
+        threshold: 0.6 // Play when 60% visible
+    });
+
+    carousel.querySelectorAll('.mobile-video-panel').forEach(panel => {
+        observer.observe(panel);
+    });
+}
+
+
+// Initialize
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    renderMobileSearch();
+    renderMobileDeepDives();
+    setupSearchToggle();
+    initMobilePlayerLogic();
+} else {
+    document.addEventListener('DOMContentLoaded', () => {
+        renderMobileSearch();
+        renderMobileDeepDives();
+        setupSearchToggle();
+        initMobilePlayerLogic();
+    });
+}
+
+// =========================================
+// 📱 MOBILE FULL PAGE PLAYER LOGIC
+// =========================================
+
+function initMobilePlayerLogic() {
+    setupMobileFullPlayer();
+
+    // Hook into existing updates
+    // We hook into updateMiniPlayerUI to sync state changes (Play/Pause/Song Change)
+    if (typeof updateMiniPlayerUI === 'function') {
+        const originalUpdateMiniPlayerUI = updateMiniPlayerUI;
+        updateMiniPlayerUI = function () {
+            originalUpdateMiniPlayerUI();
+            updateMobilePlayerUI();
+        };
+    }
+
+    // Add independent time update listener
+    if (audio) {
+        audio.addEventListener('timeupdate', updateMobileProgress);
+    }
+}
+
+function setupMobileFullPlayer() {
+    const overlay = document.getElementById('mobile-player-overlay');
+    const closeBtn = document.getElementById('close-mobile-player');
+    const miniPlayer = document.querySelector('.now-playing-mini');
+
+    if (!overlay || !miniPlayer) return;
+
+    // Open Overlay
+    miniPlayer.addEventListener('click', (e) => {
+        // Only on mobile
+        if (window.innerWidth <= 768) {
+            // Prevent opening if clicking specific mini-buttons if necessary, 
+            // but usually clicking the bar opens it.
+            if (e.target.closest('.mini-btn')) return;
+
+            overlay.classList.add('open');
+            document.body.classList.add('mobile-player-active'); // Add class
+            document.body.style.overflow = 'hidden'; // Prevent scrolling bg
+            updateMobilePlayerUI(); // Ensure fresh data
+        }
+    });
+
+    // Close Overlay
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            overlay.classList.remove('open');
+            document.body.classList.remove('mobile-player-active'); // Remove class
+            document.body.style.overflow = '';
+        });
+    }
+
+    // Controls
+    const mPlayBtn = document.getElementById('mobile-play-btn');
+    if (mPlayBtn) {
+        mPlayBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePlay();
+        });
+    }
+
+    const mNextBtn = document.getElementById('mobile-next-btn');
+    if (mNextBtn) {
+        mNextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            playNext();
+        });
+    }
+
+    const mPrevBtn = document.getElementById('mobile-prev-btn');
+    if (mPrevBtn) {
+        mPrevBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            playPrev();
+        });
+    }
+
+    const mShuffleBtn = document.getElementById('mobile-shuffle-btn');
+    if (mShuffleBtn) {
+        mShuffleBtn.addEventListener('click', () => {
+            const mainShuffle = document.getElementById('shuffle-btn');
+            if (mainShuffle) mainShuffle.click(); // Reuse main logic
+        });
+    }
+
+    const mLoopBtn = document.getElementById('mobile-loop-btn');
+    if (mLoopBtn) {
+        mLoopBtn.addEventListener('click', () => {
+            const mainLoop = document.getElementById('loop-btn');
+            if (mainLoop) mainLoop.click(); // Reuse main logic
+        });
+    }
+
+    // Like Button
+    const mLikeBtn = document.getElementById('mobile-like-btn');
+    if (mLikeBtn) {
+        mLikeBtn.addEventListener('click', () => {
+            const song = songs[currentSongIndex];
+            if (song) toggleLike(song);
+            updateMobilePlayerUI();
+        });
+    }
+
+    // Progress Bar Interaction
+    const mProgressContainer = document.getElementById('mobile-progress-container');
+    if (mProgressContainer) {
+        mProgressContainer.addEventListener('click', (e) => {
+            const width = mProgressContainer.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audio.duration;
+            if (duration) {
+                audio.currentTime = (clickX / width) * duration;
+                updateMobileProgress(); // Instant update
+            }
+        });
+    }
+}
+
+function updateMobilePlayerUI() {
+    const overlay = document.getElementById('mobile-player-overlay');
+    if (!overlay) return; // Not present?
+
+    const song = songs[currentSongIndex];
+    if (!song) return;
+
+    // Info
+    const titleOps = document.getElementById('mobile-player-title');
+    const artistOps = document.getElementById('mobile-player-artist');
+    const imgOps = document.getElementById('mobile-player-img');
+
+    if (titleOps) titleOps.innerText = song.title;
+    if (artistOps) artistOps.innerText = song.artist;
+    if (imgOps) imgOps.src = song.cover;
+
+    // Play Button
+    const mPlayBtn = document.getElementById('mobile-play-btn');
+    if (mPlayBtn) {
+        mPlayBtn.innerHTML = !audio.paused ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+    }
+
+    // Like Button
+    const mLikeBtn = document.getElementById('mobile-like-btn');
+    if (mLikeBtn) {
+        const liked = isLiked(song.id);
+        mLikeBtn.innerHTML = liked ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
+        mLikeBtn.classList.toggle('liked', liked);
+    }
+
+    // Shuffle/Loop State Visuals
+    const mShuffleBtn = document.getElementById('mobile-shuffle-btn');
+    if (mShuffleBtn) {
+        mShuffleBtn.style.color = isShuffleOn ? 'var(--primary-color)' : 'white';
+        mShuffleBtn.querySelector('i').className = 'fa-solid fa-shuffle'; // Reset icon if needed
+    }
+
+    const mLoopBtn = document.getElementById('mobile-loop-btn');
+    if (mLoopBtn) {
+        mLoopBtn.style.color = audio.loop ? 'var(--primary-color)' : 'white';
+    }
+}
+
+function updateMobileProgress() {
+    const fill = document.getElementById('mobile-progress-fill');
+    const currTime = document.getElementById('mobile-curr-time');
+    const durTime = document.getElementById('mobile-dur-time');
+
+    if (!fill) return;
+
+    const current = audio.currentTime;
+    const duration = audio.duration;
+
+    if (duration) {
+        const percent = (current / duration) * 100;
+        fill.style.width = `${percent}%`;
+
+        if (currTime) currTime.innerText = formatTime(current);
+        if (durTime) durTime.innerText = formatTime(duration);
+    }
+}
+
