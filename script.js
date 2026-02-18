@@ -296,6 +296,7 @@ function showView(viewId) {
 
     // Update State
     currentView = viewId;
+    document.body.className = `view-${viewId}`; // Add class for CSS targeting
 
     // Reset Library active state if leaving
     if (viewId !== 'dashboard') {
@@ -665,42 +666,40 @@ function openAlbum(album) {
     const metaContainer = document.querySelector('#album-view .album-info-hero');
     if (metaContainer) {
         metaContainer.innerHTML = `
-            <div style="display:flex; flex-direction:column; justify-content:flex-end; height:100%;">
-                <h5 style="color: var(--primary-color); letter-spacing: 2px; font-weight:bold; margin-bottom:10px;">${(album.type || 'ALBUM').toUpperCase()}</h5>
-                <h1 style="font-size: 64px; margin: 0 0 20px 0; line-height:1;">${album.title}</h1>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-                    <img src="${artistImg}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
-                    <span style="font-weight: bold;">${album.artist}</span>
-                    <span style="color: #ccc;">• ${album.year || '2024'} • ${album.songs ? album.songs.length : 0} songs</span>
+            <div class="album-header-info">
+                <h5 class="album-type-label">${(album.type || 'ALBUM').toUpperCase()}</h5>
+                <h1 class="album-title-hero">${album.title}</h1>
+                <div class="album-creator-info">
+                    <img src="${artistImg}" class="artist-mini-avatar">
+                    <span class="artist-name-hero">${album.artist}</span>
+                    <span class="album-stats-hero">• ${album.type || 'Album'} • ${album.year || '2024'}</span>
                 </div>
 
-                <div class="action-bar" style="display: flex; align-items: center; gap: 24px;">
-                    <button id="ab-play-btn" class="action-btn-play" 
-                        style="width: 56px; height: 56px; border-radius: 50%; background: #1db954; color: black; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;">
-                        <i class="fa-solid fa-play"></i>
-                    </button>
+                <div class="album-actions-bar">
+                    <div class="primary-actions">
+                        <button id="ab-play-btn" class="action-btn-large-play">
+                            <i class="fa-solid fa-play"></i> <span class="btn-label">Play</span>
+                        </button>
 
-                    <button id="ab-enhance-btn" title="Enhance"
-                        style="background: none; border: 1px solid #727272; color: #fff; border-radius: 20px; padding: 5px 15px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 5px; height: 32px; transition: all 0.2s;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    </button>
+                        <button id="ab-shuffle-btn" class="action-btn-large-shuffle">
+                            <i class="fa-solid fa-shuffle"></i> <span class="btn-label">Shuffle</span>
+                        </button>
+                    </div>
 
-                    <button id="ab-shuffle-btn" title="Shuffle"
-                        style="background: none; border: none; color: ${isShuffleOn ? 'var(--primary-color)' : '#b3b3b3'}; font-size: 24px; cursor: pointer; transition: color 0.2s;">
-                        <i class="fa-solid fa-shuffle"></i>
-                    </button>
+                    <div class="secondary-actions">
+                        <button id="ab-add-btn" class="action-btn-circle ${library.includes(album.id) ? 'active' : ''}" title="Add to Library">
+                            <i class="fa-solid ${library.includes(album.id) ? 'fa-check' : 'fa-plus'}"></i>
+                        </button>
 
-                    <button id="ab-add-btn" title="Add to Library"
-                        style="background: none; border: 2px solid ${library.includes(album.id) ? 'var(--primary-color)' : '#b3b3b3'}; color: ${library.includes(album.id) ? 'var(--primary-color)' : '#b3b3b3'}; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
-                        <i class="fa-solid ${library.includes(album.id) ? 'fa-check' : 'fa-plus'}"></i>
-                    </button>
-
-                    <button id="ab-download-btn" title="Download"
-                        style="background: none; border: 2px solid #b3b3b3; color: #b3b3b3; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
-                        <i class="fa-solid fa-arrow-down"></i>
-                    </button>
-                    
-                    <button style="background: none; border: none; color: #b3b3b3; font-size: 24px; cursor: pointer;"><i class="fa-solid fa-ellipsis"></i></button>
+                        <button id="ab-download-btn" class="action-btn-circle" title="Download">
+                            <i class="fa-solid fa-arrow-down"></i>
+                        </button>
+                        
+                        <button class="action-btn-circle"><i class="fa-solid fa-ellipsis"></i></button>
+                    </div>
+                </div>
+                <div class="album-description-hero">
+                    One of the most distinctive male voices of contemporary Bollywood, Arijit Singh brings an intimate, husky ti... <span style="color:white; cursor:pointer;">MORE</span>
                 </div>
             </div>
         `;
@@ -735,13 +734,11 @@ function openAlbum(album) {
         const index = library.indexOf(album.id);
         if (index > -1) {
             library.splice(index, 1);
-            addBtn.style.color = '#b3b3b3';
-            addBtn.style.borderColor = '#b3b3b3';
+            addBtn.classList.remove('active');
             addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
         } else {
             library.push(album.id);
-            addBtn.style.color = 'var(--primary-color)';
-            addBtn.style.borderColor = 'var(--primary-color)';
+            addBtn.classList.add('active');
             addBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
         }
         localStorage.setItem('neonLibrary', JSON.stringify(library));
