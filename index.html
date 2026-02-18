@@ -112,12 +112,12 @@
                     <button class="scroll-btn right" id="artist-next"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
 
-                <div class="section-title" style="margin-top: 40px;">Deep Dives</div>
+                <div class="section-title" id="home-deep-dive-title" style="margin-top: 40px;">Deep Dives</div>
                 <div class="deep-dive-grid" id="big-panels-grid">
                     <!-- JS Injected -->
                 </div>
             </div>
-            
+
 
             <!-- Library/Dashboard View -->
             <div id="dashboard-view" class="view-section" style="display: none;">
@@ -205,9 +205,66 @@
             </div>
 
             <!-- Search Results View -->
-            <div id="search-view" class="view-section" style="display: none;">
-                <div class="section-title">Search Results</div>
-                <div class="card-grid" id="search-results-grid">
+            <div id="search-view" class="view-section" style="display: none; padding-bottom: 80px;">
+
+                <!-- Mobile Header -->
+                <div class="mobile-search-header mobile-only"
+                    style="padding: 20px 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="user-icon"
+                            style="background:#b026ff; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">
+                            A</div>
+                        <h2 style="margin:0; font-size: 24px;">Search</h2>
+                    </div>
+                    <i class="fa-solid fa-camera" style="font-size: 24px;"></i>
+                </div>
+
+                <!-- Search Input Container (Mobile Style) -->
+                <div class="search-container-mobile" style="padding: 0 15px 20px 15px;">
+                    <div class="search-bar-mobile"
+                        style="background: white; border-radius: 4px; padding: 10px 15px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-magnifying-glass" style="color: black;"></i>
+                        <input type="text" id="search-input-mobile" placeholder="What do you want to listen to?"
+                            style="border: none; outline: none; flex: 1; font-size: 16px; color: black; font-weight: 500;">
+                    </div>
+                </div>
+
+                <!-- Default Browse Data -->
+                <div id="search-browse-content">
+
+                    <!-- Start Browsing Carousel -->
+                    <div style="padding: 0 15px;">
+                        <h3 class="section-title" style="margin-bottom: 15px;">Start browsing</h3>
+                        <div class="browse-carousel" id="browse-carousel"
+                            style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none;">
+                            <!-- Injected JS -->
+                        </div>
+                    </div>
+
+                    <!-- Mobile Deep Dive Carousel -->
+                    <div style="padding: 0 15px; margin-top: 20px;">
+                        <h3 class="section-title" style="margin-bottom: 15px;">Deep Dives</h3>
+                        <div class="browse-carousel" id="mobile-deep-dive-carousel"
+                            style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none;">
+                            <!-- Injected JS -->
+                        </div>
+                    </div>
+
+                    <!-- Browse All Grid -->
+                    <div style="padding: 20px 15px;">
+                        <h3 class="section-title" style="margin-bottom: 15px;">Browse all</h3>
+                        <div class="browse-all-grid" id="browse-all-grid"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <!-- Injected JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Results (Hidden initially) -->
+                <div id="search-results-container" style="display: none; padding: 0 15px;">
+                    <div class="section-title">Results</div>
+                    <div class="card-grid" id="search-results-grid">
+                    </div>
                 </div>
             </div>
 
@@ -317,6 +374,8 @@
                 <div id="mini-title" class="mini-title">Title</div>
                 <div id="mini-artist" class="mini-artist">Artist</div>
             </div>
+            <button id="mini-play-btn" class="mini-btn mobile-only" title="Play"><i
+                    class="fa-solid fa-play"></i></button>
             <button id="mini-add-btn" class="mini-btn" title="Add to Library"><i
                     class="fa-regular fa-circle-check"></i></button>
         </div>
@@ -381,6 +440,71 @@
                 <!-- JS Injected Options -->
             </div>
             <button id="update-lang-btn" class="update-btn">Update</button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-target="home">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" data-target="search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+        </div>
+        <div class="nav-item" data-target="dashboard">
+            <i class="fa-solid fa-book"></i>
+            <span>Library</span>
+        </div>
+        <div class="nav-item">
+            <i class="fa-brands fa-spotify"></i>
+            <span>Premium</span>
+        </div>
+    </nav>
+
+    <!-- Mobile Full Page Player Overlay -->
+    <div id="mobile-player-overlay" class="mobile-player-overlay">
+        <div class="mobile-player-header">
+            <button id="close-mobile-player" class="mobile-icon-btn"><i class="fa-solid fa-chevron-down"></i></button>
+            <span class="mobile-header-title">Now Playing</span>
+            <button class="mobile-icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+        </div>
+
+        <div class="mobile-player-artwork">
+            <img src="" id="mobile-player-img" alt="Album Art">
+        </div>
+
+        <div class="mobile-player-info">
+            <div class="mobile-track-details">
+                <h2 id="mobile-player-title">Song Title</h2>
+                <p id="mobile-player-artist">Artist Name</p>
+            </div>
+            <button id="mobile-like-btn" class="mobile-icon-btn"><i class="fa-regular fa-heart"></i></button>
+        </div>
+
+        <div class="mobile-player-progress">
+            <div class="progress-bar mobile-progress-bar" id="mobile-progress-container">
+                <div class="progress-fill" id="mobile-progress-fill"></div>
+            </div>
+            <div class="time-display">
+                <span id="mobile-curr-time">0:00</span>
+                <span id="mobile-dur-time">0:00</span>
+            </div>
+        </div>
+
+        <div class="mobile-player-controls">
+            <button id="mobile-shuffle-btn" class="mobile-control-btn"><i class="fa-solid fa-shuffle"></i></button>
+            <button id="mobile-prev-btn" class="mobile-control-btn"><i class="fa-solid fa-backward-step"></i></button>
+            <button id="mobile-play-btn" class="mobile-play-circle"><i class="fa-solid fa-play"></i></button>
+            <button id="mobile-next-btn" class="mobile-control-btn"><i class="fa-solid fa-forward-step"></i></button>
+            <button id="mobile-loop-btn" class="mobile-control-btn"><i class="fa-solid fa-rotate-right"></i></button>
+        </div>
+
+        <div class="mobile-player-footer">
+            <button class="mobile-footer-btn"><i class="fa-solid fa-quote-right"></i></button>
+            <button class="mobile-footer-btn"><i class="fa-solid fa-computer"></i></button> <!-- Connect Device -->
+            <button class="mobile-footer-btn"><i class="fa-solid fa-list-ul"></i></button>
         </div>
     </div>
 
