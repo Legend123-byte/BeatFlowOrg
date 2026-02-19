@@ -241,6 +241,7 @@
                     <div class="search-bar-mobile">
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="text" id="search-input-mobile" placeholder="Artists, Songs, Lyrics and more">
+                        <i class="fa-solid fa-xmark" id="mobile-search-clear" style="display: none;"></i>
                     </div>
                 </div>
 
@@ -520,6 +521,7 @@
             <button id="search-back-btn" class="overlay-back-btn"><i class="fa-solid fa-arrow-left"></i></button>
             <div class="overlay-input-wrapper">
                 <input type="text" id="overlay-search-input" placeholder="Artists, Songs, Lyrics and more">
+                <i class="fa-solid fa-xmark" id="overlay-search-clear" style="display: none;"></i>
             </div>
         </div>
 
@@ -561,6 +563,64 @@
             <span>Premium</span>
         </div>
     </nav>
+
+    <!-- Mobile Options Bottom Sheet -->
+    <div id="mobile-options-sheet" class="mobile-options-sheet">
+        <div class="mobile-options-overlay" id="mobile-options-overlay"></div>
+        <div class="mobile-options-content">
+            <div class="mobile-options-header">
+                <img src="" id="mo-cover" class="mo-cover">
+                <div class="mo-info">
+                    <div id="mo-title" class="mo-title">Song Title</div>
+                    <div id="mo-artist" class="mo-artist">Artist Name</div>
+                    <div id="mo-meta" class="mo-meta">Album • 2024</div>
+                </div>
+                <button id="mo-close-btn" class="mo-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="mobile-options-list">
+                <div class="mo-item" id="mo-add-lib">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add to Library</span>
+                </div>
+                <div class="mo-item" id="mo-add-pl">
+                    <i class="fa-solid fa-list-ul"></i>
+                    <span>Add to a Playlist...</span>
+                </div>
+                <div class="mo-item" id="mo-play-next">
+                    <i class="fa-solid fa-indent"></i>
+                    <span>Play Next</span>
+                </div>
+                <div class="mo-item" id="mo-add-queue">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Add to Queue</span>
+                </div>
+                <div class="mo-item" id="mo-share" style="color: #b3b3b3;">
+                    <i class="fa-solid fa-share-nodes"></i>
+                    <span>Share Song</span>
+                </div>
+                <div class="mo-item" id="mo-lyrics" style="color: #b3b3b3;">
+                    <i class="fa-solid fa-quote-right"></i>
+                    <span>Share Lyrics...</span>
+                </div>
+                <div class="mo-item" id="mo-view-credits" style="color: #b3b3b3;">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>View Credits</span>
+                </div>
+                <div class="mo-item" id="mo-station" style="color: #b3b3b3;">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                    <span>Create Station</span>
+                </div>
+                <div class="mo-item" id="mo-fav">
+                    <i class="fa-regular fa-star"></i>
+                    <span>Favourite</span>
+                </div>
+                <div class="mo-item" id="mo-suggest-less" style="color: #b3b3b3;">
+                    <i class="fa-regular fa-thumbs-down"></i>
+                    <span>Suggest Less</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="data.js"></script>
     <script src="script.js"></script>
