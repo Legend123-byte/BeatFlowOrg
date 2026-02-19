@@ -13,7 +13,8 @@ const views = {
     album: document.getElementById('album-view'),
     search: document.getElementById('search-view'),
     liked: document.getElementById('liked-view'),
-    artist: document.getElementById('artist-view')
+    artist: document.getElementById('artist-view'),
+    browse: document.getElementById('browse-view') // New View
 };
 
 // Navigation History
@@ -96,6 +97,26 @@ function setupEventListeners() {
     if (player.playBtn) player.playBtn.addEventListener('click', togglePlay);
     if (player.nextBtn) player.nextBtn.addEventListener('click', playNext);
     if (player.prevBtn) player.prevBtn.addEventListener('click', playPrev);
+
+    // Mini Next Button
+    const miniNextBtn = document.getElementById('mini-next-btn');
+    if (miniNextBtn) {
+        miniNextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            playNext();
+        });
+    }
+
+    // Desktop Space Bar Toggle
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+            const activeTag = document.activeElement.tagName.toUpperCase();
+            if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
+
+            e.preventDefault(); // Prevent scrolling
+            togglePlay();
+        }
+    });
 
     // Back Button
     const backBtn = document.getElementById('nav-back-btn');
@@ -364,7 +385,80 @@ function setupEventListeners() {
         miniPlayerBtn.addEventListener('click', toggleMiniPlayer);
     }
 
+    // Browse Button (Desktop)
+    const browseBtn = document.getElementById('desktop-browse-btn');
+    if (browseBtn) {
+        browseBtn.addEventListener('click', () => {
+            showView('browse');
+            renderBrowseView();
+        });
+    }
+
     renderPlaylists();
+}
+
+// Browse View Logic
+function renderBrowseView() {
+    const startGrid = document.getElementById('browse-start-grid');
+    const allGrid = document.getElementById('browse-all-categories');
+
+    // Prevent re-rendering if already populated
+    if (startGrid.children.length > 0) return;
+
+    const startCategories = [
+        { title: 'Music', color: '#dc148c', img: 'https://i.scdn.co/image/ab67706f00000002aa93fe4d3c26d8332da75768' },
+        { title: 'Podcasts', color: '#006450', img: 'https://i.scdn.co/image/ab6765630000ba8a81f07e1a92d63e9ea9562963' }, // Placeholder
+        { title: 'Live Events', color: '#8400e7', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' }
+    ];
+
+    const allCategories = [
+        { title: 'Made For You', color: '#1e3264', img: 'https://t.scdn.co/images/ea364e99656e46a096ea1df50f581efe' },
+        { title: 'New Releases', color: '#e8115b', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Hindi', color: '#e1118c', img: 'https://i.scdn.co/image/ab67706f000000024f2277d018659d4c79877b06' },
+        { title: 'Punjabi', color: '#b02897', img: 'https://i.scdn.co/image/ab67706f000000024618eaaa682f646019572c6d' },
+        { title: 'Tamil', color: '#e91429', img: 'https://i.scdn.co/image/ab67706f00000002e11a75eb1f8796500589d813' },
+        { title: 'Telugu', color: '#d84000', img: 'https://i.scdn.co/image/ab67706f0000000245a499318c460d3d5f470519' },
+        { title: 'Charts', color: '#8d67ab', img: 'https://charts-images.scdn.co/assets/locale_en/regional/weekly/region_global_default.jpg' },
+        { title: 'Pop', color: '#148a08', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Indie', color: '#e91429', img: 'https://i.scdn.co/image/ab67706f000000025f732736327ac972a9b40090' },
+        { title: 'Trending', color: '#b02897', img: 'https://i.scdn.co/image/ab67706f00000002b55b6074da1d43715fc16d6d' },
+        { title: 'Love', color: '#e61e32', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Discover', color: '#8d67ab', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Mood', color: '#e1118c', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Party', color: '#537aa1', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Devotional', color: '#148a08', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Decades', color: '#c39687', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Hip-Hop', color: '#bc5900', img: 'https://i.scdn.co/image/ab67706f000000029bb6af539d072de34548d15c' },
+        { title: 'Dance / Electronic', color: '#dc148c', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Student', color: '#eb1e32', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Chill', color: '#477d95', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Gaming', color: '#e91429', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'K-pop', color: '#148a08', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Workout', color: '#777777', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+        { title: 'Radar', color: '#777777', img: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72c5112' },
+    ];
+
+    function createCategoryCard(cat) {
+        const div = document.createElement('div');
+        div.className = 'category-card';
+        div.style.backgroundColor = cat.color;
+
+        div.innerHTML = `
+            <h3>${cat.title}</h3>
+            <img src="${cat.img}" loading="lazy" alt="${cat.title}">
+        `;
+
+        // Click Handler (Placeholder)
+        div.addEventListener('click', () => {
+            console.log(`Open Category: ${cat.title}`);
+            // Future: Navigate to category page
+        });
+
+        return div;
+    }
+
+    startCategories.forEach(cat => startGrid.appendChild(createCategoryCard(cat)));
+    allCategories.forEach(cat => allGrid.appendChild(createCategoryCard(cat)));
 }
 
 function setupNavigation() {
@@ -381,8 +475,17 @@ function setupNavigation() {
     });
 }
 
+// Scroll Position State
+const scrollPositions = {};
+
 function showView(viewId) {
     if (currentView === viewId) return; // Avoid duplicate moves
+
+    // Save current scroll position
+    const mainContent = document.getElementById('main-content');
+    if (currentView && mainContent) {
+        scrollPositions[currentView] = mainContent.scrollTop;
+    }
 
     // History Logic
     if (!isNavigatingBack && currentView) {
@@ -397,6 +500,11 @@ function showView(viewId) {
     // Update State
     currentView = viewId;
     document.body.className = `view-${viewId}`; // Add class for CSS targeting
+
+    // Restore scroll position
+    if (mainContent) {
+        mainContent.scrollTop = scrollPositions[viewId] || 0;
+    }
 
     // Close Search Overlay if open (Fix for mobile overlay persistence)
     closeSearchOverlay();
@@ -418,6 +526,7 @@ function goBack() {
 function createCard(title, subtitle, image, onClick, itemData = null, type = 'general') {
     const div = document.createElement('div');
     div.className = 'card';
+    if (type === 'artist') div.classList.add('artist-card');
     div.innerHTML = `
         <img src="${image}" loading="lazy" alt="${title}">
         <h3>${title}</h3>
@@ -920,6 +1029,70 @@ function openAlbum(album) {
         });
         tracklist.appendChild(row);
     });
+
+    // =========================================
+    // 📊 ALBUM STATS & FEATURED ARTISTS (Mobile)
+    // =========================================
+
+    // 1. Calculate Duration
+    const totalDurationSeconds = displaySongs.reduce((acc, song) => {
+        const parts = song.duration.split(':').map(Number);
+        const seconds = parts.length === 2 ? parts[0] * 60 + parts[1] : 0;
+        return acc + seconds;
+    }, 0);
+
+    const hours = Math.floor(totalDurationSeconds / 3600);
+    const minutes = Math.floor((totalDurationSeconds % 3600) / 60);
+    const durationText = hours > 0 ? `${hours} hours ${minutes} minutes` : `${minutes} minutes`;
+
+    const statsDiv = document.createElement('div');
+    statsDiv.className = 'album-stats-footer mobile-only';
+    statsDiv.innerText = `${displaySongs.length} songs, ${durationText}`;
+    tracklist.appendChild(statsDiv);
+
+    // 2. Featured Artists
+    // Extract artists from song artist strings, exclude main album artist
+    const mainArtist = album.artist.toLowerCase();
+    const featuredSet = new Set();
+
+    displaySongs.forEach(song => {
+        // Split by ',' or '&'
+        const names = song.artist.split(/,|&/).map(n => n.trim());
+        names.forEach(name => {
+            if (name.toLowerCase() !== mainArtist && name.length > 0) {
+                featuredSet.add(name);
+            }
+        });
+    });
+
+    if (featuredSet.size > 0) {
+        const featuredContainer = document.createElement('div');
+        featuredContainer.className = 'featured-artists-section mobile-only';
+
+        let carouselHTML = `
+            <h3 class="featured-title">Featured Artists <i class="fa-solid fa-chevron-right" style="font-size: 12px;"></i></h3>
+            <div class="featured-artists-carousel">
+        `;
+
+        featuredSet.forEach(name => {
+            // Find image if exists in global artists array, else generic
+            const artistObj = artists.find(a => a.name.toLowerCase() === name.toLowerCase());
+            // Use artist image or random one from unsplash source if quick match fails
+            // For now, let's try to map or use a placeholder that looks nice
+            const img = artistObj ? artistObj.image : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`;
+
+            carouselHTML += `
+                <div class="artist-circle-item">
+                    <img src="${img}" class="artist-circle-img">
+                    <span class="artist-circle-name">${name}</span>
+                </div>
+            `;
+        });
+
+        carouselHTML += `</div>`;
+        featuredContainer.innerHTML = carouselHTML;
+        tracklist.appendChild(featuredContainer);
+    }
 }
 
 function openDeepDivePage(data) {
