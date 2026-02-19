@@ -377,6 +377,9 @@ function showView(viewId) {
     currentView = viewId;
     document.body.className = `view-${viewId}`; // Add class for CSS targeting
 
+    // Close Search Overlay if open (Fix for mobile overlay persistence)
+    closeSearchOverlay();
+
     // Reset Library active state if leaving
     if (viewId !== 'dashboard') {
         // Optional: clear filters
@@ -1079,6 +1082,17 @@ function playSong(song) {
 
     audio.src = song.src;
     audio.dataset.currentSongId = song.id;
+
+    // Fix: Update global state if not already matching (e.g. playing from Search)
+    const knownIndex = currentPlaylist.findIndex(s => s.id === song.id);
+    if (knownIndex !== -1) {
+        currentSongIndex = knownIndex;
+    } else {
+        // Song from search / outside current context -> Set as new context
+        currentPlaylist = [song];
+        currentSongIndex = 0;
+    }
+
     audio.play().catch(error => {
         console.error("Playback failed:", error);
     });
@@ -1130,12 +1144,19 @@ function updatePlayButton() {
         const rsVideo = document.getElementById('rs-loop-video');
         if (rsVideo) rsVideo.pause();
     }
+
+    // Sync Mobile Play Button
+    const mobilePlayBtn = document.getElementById('mobile-play-btn');
+    if (mobilePlayBtn) {
+        mobilePlayBtn.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+    }
 }
 
 // Update Player and Right Side Canvas
 // Update Player and Right Side Canvas
 // Update Player and Right Side Canvas
 function updatePlayerUI(song) {
+    updateMobilePlayerUI(song);
     if (player.title) player.title.innerText = song.title;
     if (player.artist) player.artist.innerText = song.artist;
 
@@ -1242,11 +1263,53 @@ function updatePlayerUI(song) {
     }
 }
 
+function updateMobilePlayerUI(song) {
+    if (!song) return;
+    const mobileImg = document.getElementById('mobile-player-img');
+    const mobileTitle = document.getElementById('mobile-player-title');
+    const mobileArtist = document.getElementById('mobile-player-artist');
+    const mobilePlayBtn = document.getElementById('mobile-play-btn');
+    const mobileLikeBtn = document.getElementById('mobile-like-btn');
+
+    if (mobileImg) mobileImg.src = song.cover;
+    if (mobileTitle) mobileTitle.innerText = song.title;
+    if (mobileArtist) mobileArtist.innerText = song.artist;
+
+    if (mobilePlayBtn) {
+        mobilePlayBtn.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+    }
+
+    if (mobileLikeBtn) {
+        const liked = isLiked(song.id);
+        mobileLikeBtn.innerHTML = liked ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
+        mobileLikeBtn.classList.toggle('liked', liked);
+        mobileLikeBtn.style.color = liked ? '#1db954' : 'white';
+
+        // Re-attach listener to ensure it works for current song
+        mobileLikeBtn.onclick = (e) => {
+            e.stopPropagation();
+            toggleLike(song);
+            updateMobilePlayerUI(song); // Update self
+        };
+    }
+}
+
 function updateProgress() {
     const { currentTime, duration } = audio;
     const progressPercent = (currentTime / duration) * 100;
     player.progressFill.style.width = `${progressPercent}%`;
     player.currTime.innerText = formatTime(currentTime);
+
+    player.currTime.innerText = formatTime(currentTime);
+
+    // Mobile Progress
+    const mobileFill = document.getElementById('mobile-progress-fill');
+    const mobileCurr = document.getElementById('mobile-curr-time');
+    const mobileDur = document.getElementById('mobile-dur-time');
+
+    if (mobileFill) mobileFill.style.width = `${progressPercent}%`;
+    if (mobileCurr) mobileCurr.innerText = formatTime(currentTime);
+    if (mobileDur) mobileDur.innerText = formatTime(duration);
 
     if (typeof updateMiniPlayerProgress === 'function') {
         updateMiniPlayerProgress(currentTime, duration);
@@ -3260,7 +3323,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const overlay = document.getElementById('mobile-player-overlay');
             if (overlay) {
                 overlay.classList.add('open');
-                updateMobilePlayerUI();
+
+                // Fix: Fetch current song safely to update UI on open
+                let song = null;
+                if (audio.dataset.currentSongId && typeof songs !== 'undefined') {
+                    song = songs.find(s => String(s.id) === String(audio.dataset.currentSongId));
+                }
+
+                // Fallback removed to avoid overwriting with wrong song from index
+
+                if (song) {
+                    updateMobilePlayerUI(song);
+                }
             }
         });
     }
