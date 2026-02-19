@@ -1264,6 +1264,13 @@ function updatePlayerUI(song) {
 }
 
 function updateMobilePlayerUI(song) {
+    // Fallback if no song provided (e.g. called from hook)
+    if (!song) {
+        if (typeof currentPlaylist !== 'undefined' && currentPlaylist.length > 0 && typeof currentSongIndex !== 'undefined') {
+            song = currentPlaylist[currentSongIndex];
+        }
+    }
+
     if (!song) return;
     const mobileImg = document.getElementById('mobile-player-img');
     const mobileTitle = document.getElementById('mobile-player-title');
@@ -1291,6 +1298,22 @@ function updateMobilePlayerUI(song) {
             toggleLike(song);
             updateMobilePlayerUI(song); // Update self
         };
+    }
+}
+
+function updateMobileProgress() {
+    const fill = document.getElementById('mobile-progress-fill');
+    const currTime = document.getElementById('mobile-curr-time');
+    const durTime = document.getElementById('mobile-dur-time');
+
+    if (!fill) return;
+
+    if (audio.duration) {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        fill.style.width = `${percent}%`;
+
+        if (currTime) currTime.innerText = formatTime(audio.currentTime);
+        if (durTime) durTime.innerText = formatTime(audio.duration);
     }
 }
 
@@ -2550,7 +2573,14 @@ async function toggleMiniPlayer() {
         doc.head.appendChild(faLink);
 
         // Build UI
-        const currentSong = songs[currentSongIndex] || {};
+        // Fix: Use currentPlaylist instead of songs to ensure correct song is shown
+        let currentSong = {};
+        if (typeof currentPlaylist !== 'undefined' && currentPlaylist.length > 0) {
+            currentSong = currentPlaylist[currentSongIndex] || {};
+        } else {
+            currentSong = songs[currentSongIndex] || {};
+        }
+
         const isPlaying = !audio.paused;
 
         doc.body.innerHTML = `
@@ -2651,7 +2681,12 @@ async function toggleMiniPlayer() {
 
         // Share
         doc.getElementById('mp-share').addEventListener('click', () => {
-            const song = songs[currentSongIndex];
+            // Fix: fetching song from correct source
+            let song = songs[currentSongIndex];
+            if (typeof currentPlaylist !== 'undefined' && currentPlaylist.length > 0) {
+                song = currentPlaylist[currentSongIndex];
+            }
+
             if (!song) return;
             const text = `Listening to ${song.title} by ${song.artist} on BeatFlow!`;
 
@@ -2675,7 +2710,11 @@ async function toggleMiniPlayer() {
 
         // Like
         doc.getElementById('mp-like').addEventListener('click', () => {
-            const song = songs[currentSongIndex];
+            // Fix: fetching song from correct source
+            let song = songs[currentSongIndex];
+            if (typeof currentPlaylist !== 'undefined' && currentPlaylist.length > 0) {
+                song = currentPlaylist[currentSongIndex];
+            }
             if (song) {
                 toggleLike(song);
                 updateMiniPlayerUI();
@@ -2706,7 +2745,15 @@ async function toggleMiniPlayer() {
 function updateMiniPlayerUI() {
     if (!miniPlayerWindow) return;
     const doc = miniPlayerWindow.document;
-    const song = songs[currentSongIndex];
+
+    // Fix: Use currentPlaylist
+    let song = null;
+    if (typeof currentPlaylist !== 'undefined' && currentPlaylist.length > 0) {
+        song = currentPlaylist[currentSongIndex];
+    } else {
+        song = songs[currentSongIndex];
+    }
+
     if (!song) return;
 
     const bg = doc.getElementById('mp-bg');
@@ -3135,112 +3182,7 @@ function setupMobileFullPlayer() {
     }
 }
 
-function updateMobilePlayerUI() {
-    const overlay = document.getElementById('mobile-player-overlay');
-    if (!overlay) return; // Not present?
 
-    const song = songs[currentSongIndex];
-    if (!song) return;
-
-    // Info
-    const titleOps = document.getElementById('mobile-player-title');
-    const artistOps = document.getElementById('mobile-player-artist');
-    const imgOps = document.getElementById('mobile-player-img');
-
-    if (titleOps) titleOps.innerText = song.title;
-    if (artistOps) artistOps.innerText = song.artist;
-    if (imgOps) imgOps.src = song.cover;
-
-    // Play Button
-    const mPlayBtn = document.getElementById('mobile-play-btn');
-    if (mPlayBtn) {
-        mPlayBtn.innerHTML = !audio.paused ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
-    }
-
-    // Like Button
-    const mLikeBtn = document.getElementById('mobile-like-btn');
-    if (mLikeBtn) {
-        const liked = isLiked(song.id);
-        mLikeBtn.innerHTML = liked ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
-        mLikeBtn.classList.toggle('liked', liked);
-    }
-
-    // Shuffle/Loop State Visuals
-    const mShuffleBtn = document.getElementById('mobile-shuffle-btn');
-    if (mShuffleBtn) {
-        mShuffleBtn.style.color = isShuffleOn ? 'var(--primary-color)' : 'white';
-        mShuffleBtn.querySelector('i').className = 'fa-solid fa-shuffle'; // Reset icon if needed
-    }
-
-    const mLoopBtn = document.getElementById('mobile-loop-btn');
-    if (mLoopBtn) {
-        mLoopBtn.style.color = audio.loop ? 'var(--primary-color)' : 'white';
-    }
-}
-
-function updateMobileProgress() {
-    const fill = document.getElementById('mobile-progress-fill');
-    const currTime = document.getElementById('mobile-curr-time');
-    const durTime = document.getElementById('mobile-dur-time');
-
-    if (!fill) return;
-
-    const current = audio.currentTime;
-    const duration = audio.duration;
-
-    if (duration) {
-        const percent = (current / duration) * 100;
-        fill.style.width = `${percent}%`;
-
-        if (currTime) currTime.innerText = formatTime(current);
-        if (durTime) durTime.innerText = formatTime(duration);
-    }
-}
-
-// Mobile Player UI Updater
-function updateMobilePlayerUI() {
-    const song = songs[currentSongIndex];
-    if (!song) return;
-
-    // Artwork
-    const img = document.getElementById('mobile-player-img');
-    if (img) img.src = song.cover || song.image;
-
-    // Title & Artist
-    const title = document.getElementById('mobile-player-title');
-    if (title) title.innerText = song.title || song.name;
-
-    const artist = document.getElementById('mobile-player-artist');
-    if (artist) artist.innerText = song.artist;
-
-    // Play Button
-    const playBtn = document.getElementById('mobile-play-btn');
-    if (playBtn) {
-        playBtn.innerHTML = !audio.paused ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
-    }
-
-    // Like Button
-    const likeBtn = document.getElementById('mobile-like-btn');
-    if (likeBtn) {
-        const liked = isLiked(song.id);
-        likeBtn.innerHTML = liked ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
-        likeBtn.style.color = liked ? 'var(--primary-color)' : 'white';
-    }
-
-    // Shuffle/Loop
-    const shufBtn = document.getElementById('mobile-shuffle-btn');
-    if (shufBtn) {
-        shufBtn.style.color = isShuffleOn ? 'var(--primary-color)' : 'white';
-    }
-
-    const loopBtn = document.getElementById('mobile-loop-btn');
-    if (loopBtn) {
-        loopBtn.style.color = audio.loop ? 'var(--primary-color)' : 'white';
-    }
-
-    // Initial Progress
-    updateMobileProgress();
-}
 
 // Desktop Search Dropdown Renderer
 function renderDesktopSearch(query) {
