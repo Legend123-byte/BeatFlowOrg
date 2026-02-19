@@ -302,12 +302,33 @@ function setupEventListeners() {
     const overlayInput = document.getElementById('overlay-search-input');
     const overlayBackBtn = document.getElementById('search-back-btn');
     const overlayClearBtn = document.getElementById('overlay-clear-btn');
+    const overlayInputClear = document.getElementById('overlay-search-clear'); // The X icon
 
     if (overlayInput) {
+        // Toggle X icon helper
+        const toggleOverlayX = () => {
+            if (overlayInputClear) {
+                overlayInputClear.style.display = overlayInput.value.trim().length > 0 ? 'block' : 'none';
+            }
+        };
+
+        // Input Listener
         overlayInput.addEventListener('input', (e) => {
+            toggleOverlayX();
             const query = e.target.value.toLowerCase();
             handleOverlaySearch(query);
         });
+
+        // X Icon Click Listener
+        if (overlayInputClear) {
+            overlayInputClear.addEventListener('click', () => {
+                overlayInput.value = '';
+                toggleOverlayX();
+                overlayInput.focus();
+                // Reset search results (pass empty query)
+                handleOverlaySearch('');
+            });
+        }
     }
 
     if (overlayBackBtn) {
@@ -777,7 +798,7 @@ function openAlbum(album) {
                             <i class="fa-solid fa-arrow-down"></i>
                         </button>
                         
-                        <button class="action-btn-circle"><i class="fa-solid fa-ellipsis"></i></button>
+                        <button class="action-btn-circle mobile-only"><i class="fa-solid fa-ellipsis"></i></button>
                     </div>
                 </div>
                 <div class="album-description-hero">
@@ -860,18 +881,27 @@ function openAlbum(album) {
             <div style="display:flex; align-items:center; gap:20px; flex: 1;">
                 <span class="track-number" style="color:#aaa; width:20px;">${index + 1}</span>
                 <img src="${song.cover}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;">
-                <div>
-                   <div style="color:white; font-size:16px; font-weight:500;">${song.title}</div>
-                   <div style="color:#888; font-size:14px;">${song.artist}</div>
+                <div style="min-width: 0;">
+                   <div class="track-title" style="color:white; font-size:16px; font-weight:500;">${song.title}</div>
+                   <div class="track-artist" style="color:#888; font-size:14px;">${song.artist}</div>
                 </div>
             </div>
             <button class="like-btn ${isLiked(song.id) ? 'liked' : ''}" data-id="${song.id}" style="background:none; border:none; color:${isLiked(song.id) ? '#1db954' : '#b3b3b3'}; cursor:pointer; margin-right: 20px; font-size: 16px;">
                 ${isLiked(song.id) ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>'}
             </button>
-            <span style="color:#888; font-size:14px;">${song.duration}</span>
+            <span class="desktop-only" style="color:#888; font-size:14px;">${song.duration}</span>
+            <button class="mobile-dots-btn mobile-only"><i class="fa-solid fa-ellipsis-vertical"></i></button>
         `;
 
         // Add listeners
+        const dotsBtn = row.querySelector('.mobile-dots-btn');
+        if (dotsBtn) {
+            dotsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openMobileMenu(song);
+            });
+        }
+
         const likeBtn = row.querySelector('.like-btn');
         likeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1047,7 +1077,8 @@ function openDeepDivePage(data) {
             <button class="like-btn ${isLiked(song.id) ? 'liked' : ''}" data-id="${song.id}" style="background:none; border:none; color:${isLiked(song.id) ? '#1db954' : '#b3b3b3'}; cursor:pointer; margin-right: 20px; font-size: 16px;">
                 ${isLiked(song.id) ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>'}
             </button>
-            <span style="color:#888; font-size:14px;">${song.duration}</span>
+            <span class="desktop-only" style="color:#888; font-size:14px;">${song.duration}</span>
+            <button class="mobile-dots-btn mobile-only"><i class="fa-solid fa-ellipsis-vertical"></i></button>
         `;
 
         // Listeners
@@ -2935,9 +2966,30 @@ function setupSearchToggle() {
     const resultsContainer = document.getElementById('search-results-container');
     const resultsGrid = document.getElementById('search-results-grid'); // Re-use main grid if needed or separate
 
+    const clearBtn = document.getElementById('mobile-search-clear');
+
     if (!input) return;
 
+    // Helper to toggle clear button
+    const toggleClearBtn = () => {
+        if (clearBtn) {
+            clearBtn.style.display = input.value.trim().length > 0 ? 'block' : 'none';
+        }
+    };
+
+    // Clear Logic
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            toggleClearBtn();
+            input.focus();
+            // Trigger input event to reset view
+            input.dispatchEvent(new Event('input'));
+        });
+    }
+
     input.addEventListener('input', (e) => {
+        toggleClearBtn();
         const query = e.target.value.trim().toLowerCase();
 
         if (query.length > 0) {
@@ -3100,86 +3152,281 @@ function setupMobileFullPlayer() {
             // but usually clicking the bar opens it.
             if (e.target.closest('.mini-btn')) return;
 
-            overlay.classList.add('open');
-            document.body.classList.add('mobile-player-active'); // Add class
-            document.body.style.overflow = 'hidden'; // Prevent scrolling bg
-            updateMobilePlayerUI(); // Ensure fresh data
+            openMobilePlayer();
         }
     });
 
+    // Swipe Up on Mini Player to Open
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    miniPlayer.addEventListener('touchstart', (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    miniPlayer.addEventListener('touchend', (e) => {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipeGesture();
+    }, { passive: true });
+
+    function handleSwipeGesture() {
+        if (window.innerWidth > 768) return;
+        const swipeDistance = touchStartY - touchEndY;
+        // Swipe Up > 50px
+        if (swipeDistance > 50) {
+            openMobilePlayer();
+        }
+    }
+
+    function openMobilePlayer() {
+        overlay.classList.add('open');
+        document.body.classList.add('mobile-player-active'); // Add class
+        document.body.style.overflow = 'hidden'; // Prevent scrolling bg
+        updateMobilePlayerUI(); // Ensure fresh data
+    }
+
     // Close Overlay
+    function closeMobilePlayer() {
+        overlay.classList.remove('open');
+        document.body.classList.remove('mobile-player-active'); // Remove class
+        document.body.style.overflow = '';
+    }
+
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            overlay.classList.remove('open');
-            document.body.classList.remove('mobile-player-active'); // Remove class
-            document.body.style.overflow = '';
-        });
+        closeBtn.addEventListener('click', closeMobilePlayer);
     }
 
-    // Controls
-    const mPlayBtn = document.getElementById('mobile-play-btn');
-    if (mPlayBtn) {
-        mPlayBtn.addEventListener('click', (e) => {
+    // Swipe Down to Close (on Overlay Header or Main Body)
+    // We attach to overlay, but need to be careful of inner scrolls (like lyrics or list)
+    // For now, attach to header and artwork area for safety
+    const swipeTargets = [
+        document.querySelector('.mobile-player-header'),
+        document.querySelector('.mobile-player-artwork')
+    ];
+
+    let closeTouchStartY = 0;
+    let closeTouchEndY = 0;
+
+    swipeTargets.forEach(target => {
+        if (!target) return;
+        target.addEventListener('touchstart', (e) => {
+            closeTouchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        target.addEventListener('touchend', (e) => {
+            closeTouchEndY = e.changedTouches[0].screenY;
+            handleCloseSwipe();
+        }, { passive: true });
+    });
+
+    function handleCloseSwipe() {
+        const swipeDistance = closeTouchEndY - closeTouchStartY;
+        // Swipe Down > 50px
+        if (swipeDistance > 50) {
+            closeMobilePlayer();
+        }
+    }
+}
+
+// =========================================
+// 📱 MOBILE OPTIONS MENU LOGIC
+// =========================================
+
+function openMobileMenu(song) {
+    const sheet = document.getElementById('mobile-options-sheet');
+    if (!sheet) return;
+
+    // Populate Data
+    document.getElementById('mo-cover').src = song.cover || 'https://via.placeholder.com/50';
+    document.getElementById('mo-title').innerText = song.title || 'Unknown Title';
+    document.getElementById('mo-artist').innerText = song.artist || 'Unknown Artist';
+    document.getElementById('mo-meta').innerText = `${song.album || 'Single'} • ${song.year || '2024'}`;
+
+    // Show Sheet
+    sheet.classList.add('open');
+    document.body.style.overflow = 'hidden'; // Prevent bg scroll
+
+    // Setup Actions (Closure or Re-attach)
+    // Ideally we should have persistent listeners and just update a currentSong reference, 
+    // but for simplicity we can handle clicks here or use data attributes.
+
+    function stopProp(e) {
+        e.stopPropagation();
+    }
+
+    // Check if in library
+    const addLibBtn = document.getElementById('mo-add-lib');
+    const isAdded = library.includes(song.id);
+    if (addLibBtn) {
+        addLibBtn.innerHTML = isAdded ?
+            '<i class="fa-solid fa-check" style="color:#b026ff"></i><span>Remove from Library</span>' :
+            '<i class="fa-solid fa-plus"></i><span>Add to Library</span>';
+
+        addLibBtn.onclick = (e) => {
             e.stopPropagation();
-            togglePlay();
-        });
-    }
-
-    const mNextBtn = document.getElementById('mobile-next-btn');
-    if (mNextBtn) {
-        mNextBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            playNext();
-        });
-    }
-
-    const mPrevBtn = document.getElementById('mobile-prev-btn');
-    if (mPrevBtn) {
-        mPrevBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            playPrev();
-        });
-    }
-
-    const mShuffleBtn = document.getElementById('mobile-shuffle-btn');
-    if (mShuffleBtn) {
-        mShuffleBtn.addEventListener('click', () => {
-            const mainShuffle = document.getElementById('shuffle-btn');
-            if (mainShuffle) mainShuffle.click(); // Reuse main logic
-        });
-    }
-
-    const mLoopBtn = document.getElementById('mobile-loop-btn');
-    if (mLoopBtn) {
-        mLoopBtn.addEventListener('click', () => {
-            const mainLoop = document.getElementById('loop-btn');
-            if (mainLoop) mainLoop.click(); // Reuse main logic
-        });
-    }
-
-    // Like Button
-    const mLikeBtn = document.getElementById('mobile-like-btn');
-    if (mLikeBtn) {
-        mLikeBtn.addEventListener('click', () => {
-            const song = songs[currentSongIndex];
-            if (song) toggleLike(song);
-            updateMobilePlayerUI();
-        });
-    }
-
-    // Progress Bar Interaction
-    const mProgressContainer = document.getElementById('mobile-progress-container');
-    if (mProgressContainer) {
-        mProgressContainer.addEventListener('click', (e) => {
-            const width = mProgressContainer.clientWidth;
-            const clickX = e.offsetX;
-            const duration = audio.duration;
-            if (duration) {
-                audio.currentTime = (clickX / width) * duration;
-                updateMobileProgress(); // Instant update
+            // Toggle Library
+            const index = library.indexOf(song.id);
+            if (index > -1) {
+                library.splice(index, 1);
+            } else {
+                library.push(song.id);
             }
-        });
+            localStorage.setItem('neonLibrary', JSON.stringify(library));
+
+            // Sync UI (like buttons)
+            // We can just call renderHome or update specific buttons if we want, 
+            // or rely on next render.
+            // But let's at least toggle the heart if visual.
+            // toggleLike might do more than we want if it's tied to player state?
+            // Actually toggleLike just updates array and UI.
+            // Let's manually trigger UI update for active view to be safe/fast.
+            if (openAlbum && document.querySelector('#album-view').style.display === 'flex') {
+                // Re-render album or just find the button?
+                // Finding button is better.
+                const btn = document.querySelector(`.like-btn[data-id="${song.id}"]`);
+                if (btn) {
+                    const liked = library.includes(song.id);
+                    btn.innerHTML = liked ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
+                    btn.classList.toggle('liked', liked);
+                    btn.style.color = liked ? '#1db954' : '#b3b3b3';
+                }
+            }
+
+            closeMobileMenu();
+        };
     }
+
+    // Play Next
+    const playNextBtn = document.getElementById('mo-play-next');
+    if (playNextBtn) {
+        playNextBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (currentPlaylist) {
+                currentPlaylist.splice(currentSongIndex + 1, 0, song);
+                alert(`Added to queue: ${song.title}`);
+            }
+            closeMobileMenu();
+        };
+    }
+
+    // Add to Queue
+    const addToQueueBtn = document.getElementById('mo-add-queue');
+    if (addToQueueBtn) {
+        addToQueueBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (currentPlaylist) {
+                currentPlaylist.push(song);
+                alert(`Added to queue: ${song.title}`);
+            }
+            closeMobileMenu();
+        };
+    }
+
+    // Favourite
+    const favBtn = document.getElementById('mo-fav');
+    const isFav = isLiked(song.id);
+    if (favBtn) {
+        favBtn.innerHTML = isFav ?
+            '<i class="fa-solid fa-heart" style="color:#1db954"></i><span>Liked</span>' :
+            '<i class="fa-regular fa-heart"></i><span>Favourite</span>';
+
+        favBtn.onclick = (e) => {
+            e.stopPropagation();
+            toggleLike(song);
+            closeMobileMenu();
+        };
+    }
+
+    // Prevent clicks on the content from closing (just in case)
+    const content = sheet.querySelector('.mobile-options-content');
+    if (content) {
+        content.onclick = (e) => {
+            e.stopPropagation();
+        };
+    }
+}
+
+function closeMobileMenu() {
+    const sheet = document.getElementById('mobile-options-sheet');
+    if (sheet) {
+        sheet.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+}
+
+// Setup Global Listeners for Menu
+document.addEventListener('DOMContentLoaded', () => {
+    const sheet = document.getElementById('mobile-options-sheet');
+    const overlay = document.getElementById('mobile-options-overlay');
+    const closeBtn = document.getElementById('mo-close-btn');
+
+    if (overlay) overlay.addEventListener('click', closeMobileMenu);
+    if (closeBtn) closeBtn.addEventListener('click', closeMobileMenu);
+});
+
+// Controls
+const mPlayBtn = document.getElementById('mobile-play-btn');
+if (mPlayBtn) {
+    mPlayBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePlay();
+    });
+}
+
+const mNextBtn = document.getElementById('mobile-next-btn');
+if (mNextBtn) {
+    mNextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playNext();
+    });
+}
+
+const mPrevBtn = document.getElementById('mobile-prev-btn');
+if (mPrevBtn) {
+    mPrevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playPrev();
+    });
+}
+
+const mShuffleBtn = document.getElementById('mobile-shuffle-btn');
+if (mShuffleBtn) {
+    mShuffleBtn.addEventListener('click', () => {
+        const mainShuffle = document.getElementById('shuffle-btn');
+        if (mainShuffle) mainShuffle.click(); // Reuse main logic
+    });
+}
+
+const mLoopBtn = document.getElementById('mobile-loop-btn');
+if (mLoopBtn) {
+    mLoopBtn.addEventListener('click', () => {
+        const mainLoop = document.getElementById('loop-btn');
+        if (mainLoop) mainLoop.click(); // Reuse main logic
+    });
+}
+
+// Like Button
+const mLikeBtn = document.getElementById('mobile-like-btn');
+if (mLikeBtn) {
+    mLikeBtn.addEventListener('click', () => {
+        const song = songs[currentSongIndex];
+        if (song) toggleLike(song);
+        updateMobilePlayerUI();
+    });
+}
+
+// Progress Bar Interaction
+const mProgressContainer = document.getElementById('mobile-progress-container');
+if (mProgressContainer) {
+    mProgressContainer.addEventListener('click', (e) => {
+        const width = mProgressContainer.clientWidth;
+        const clickX = e.offsetX;
+        const duration = audio.duration;
+        if (duration) {
+            audio.currentTime = (clickX / width) * duration;
+            updateMobileProgress(); // Instant update
+        }
+    });
 }
 
 
