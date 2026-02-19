@@ -71,7 +71,7 @@
                             <i class="fa-solid fa-xmark" id="desktop-search-clear"
                                 style="display:none; cursor: pointer; margin-right: 10px;"></i>
                             <span style="border-left: 1px solid #555; height: 20px; margin: 0 10px;"></span>
-                            <i class="fa-solid fa-box-archive" title="Library"
+                            <i class="fa-solid fa-box-archive" title="Library" id="desktop-browse-btn"
                                 style="cursor: pointer; color: #aaa;"></i>
                         </div>
                     </div>
@@ -298,6 +298,19 @@
                 </div>
             </div>
 
+            <!-- Browse View (Desktop) -->
+            <div id="browse-view" class="view-section" style="display: none; padding-bottom: 50px;">
+                <div class="section-title">Start browsing</div>
+                <div class="browse-grid-large" id="browse-start-grid">
+                    <!-- JS Injected -->
+                </div>
+
+                <div class="section-title" style="margin-top: 40px;">Browse all</div>
+                <div class="browse-grid-all" id="browse-all-categories">
+                    <!-- JS Injected -->
+                </div>
+            </div>
+
             <!-- Artist Details View -->
             <div id="artist-view" class="view-section" style="display: none; padding: 0;">
                 <div class="artist-header-hero" id="artist-hero"
@@ -406,8 +419,8 @@
             </div>
             <button id="mini-play-btn" class="mini-btn mobile-only" title="Play"><i
                     class="fa-solid fa-play"></i></button>
-            <button id="mini-add-btn" class="mini-btn" title="Add to Library"><i
-                    class="fa-regular fa-circle-check"></i></button>
+            <button id="mini-next-btn" class="mini-btn mobile-only" title="Next"><i
+                    class="fa-solid fa-forward-step"></i></button>
         </div>
 
         <!-- Center: Controls & Progress -->
