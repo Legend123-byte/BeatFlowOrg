@@ -3,6 +3,16 @@ let currentPlaylist = [];
 let currentSongIndex = 0;
 let isPlaying = false;
 let audio = new Audio();
+audio.preload = "auto";
+let previewAudio = null;
+let currentPreviewInterval = null;
+
+audio.addEventListener("ended", () => {
+    if (!audio.loop) {
+        playNext();
+    }
+});
+
 // audio.crossOrigin = "anonymous"; // Commenting out to allow playback if server lacks CORS support
 let currentView = 'home';
 
@@ -340,7 +350,6 @@ function setupEventListeners() {
 
     // Audio Events
     audio.addEventListener('timeupdate', updateProgress);
-    audio.addEventListener('ended', playNext);
     audio.addEventListener('loadedmetadata', () => {
         if (player.totalTime) player.totalTime.innerText = formatTime(audio.duration);
         if (typeof updateMiniPlayerUI === 'function') updateMiniPlayerUI();
@@ -1638,9 +1647,18 @@ function playSong(song) {
         });
     }
 
-    audio.play().catch(error => {
-        console.error("Playback failed:", error);
-    });
+    const playPromise = audio.play();
+
+    if (playPromise !== undefined) {
+        playPromise
+            .then(() => {
+                isPlaying = true;
+                updatePlayButton();
+            })
+            .catch(error => {
+                console.error("Playback failed:", error);
+            });
+    }
     isPlaying = true;
     updatePlayerUI(song);
     updatePlayButton();
@@ -1666,6 +1684,7 @@ function togglePlay() {
     if (audio.paused) {
         audio.play();
         isPlaying = true;
+
     } else {
         audio.pause();
         isPlaying = false;
@@ -2826,49 +2845,75 @@ const Visualizer = {
                     stopPreview();
 
                     if (item.audio) {
-                        const audio = new Audio(item.audio);
-                        audio.volume = 0.5;
+
+                        // 🛑 STOP MAIN PLAYER
+                        if (!audio.paused) {
+                            audio.pause();
+                            isPlaying = false;
+
+                            if (player.playBtn) {
+                                player.playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                            }
+                        }
+
+                        // Stop previous preview audio
+                        if (previewAudio) {
+                            previewAudio.pause();
+                            previewAudio = null;
+                        }
+
+                        // Clear previous loop interval
+                        if (currentPreviewInterval) {
+                            clearInterval(currentPreviewInterval);
+                            currentPreviewInterval = null;
+                        }
+
+                        previewAudio = new Audio(item.audio);
+                        previewAudio.volume = 0.5;
 
                         video.currentTime = 0;
                         video.style.opacity = '1';
 
-                        audio.play().catch(e => console.log(e));
+                        previewAudio.play().catch(e => console.log(e));
                         video.play().catch(e => console.log(e));
 
-                        currentPreviewAudio = audio;
+                        currentPreviewAudio = previewAudio;
                         currentPreviewVideo = video;
                         currentPreviewBtn = previewBtn;
 
                         // 30s Loop Logic
                         currentPreviewInterval = setInterval(() => {
-                            if (audio.currentTime >= 30) {
-                                audio.currentTime = 0;
+                            if (previewAudio && previewAudio.currentTime >= 30) {
+                                previewAudio.currentTime = 0;
                                 video.currentTime = 0;
-                                audio.play();
+                                previewAudio.play();
                                 video.play();
                             }
                         }, 250);
 
                         previewBtn.classList.add('active');
-                        const barsHtml = `
-                            <div class="equalizer">
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                            </div>
-                        `;
 
-                        // Extract Name
-                        let tName = item.audio.replace('.mp3', '').replace('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-', 'Track ');
+                        const barsHtml = `
+        <div class="equalizer">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+    `;
+
+                        let tName = item.audio
+                            .replace('.mp3', '')
+                            .replace('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-', 'Track ');
+
                         if (item.audio === "On My Way.mp3") tName = "On My Way";
 
                         previewBtn.innerHTML = `${barsHtml}<span class="btn-text">${tName}</span>`;
 
-                        audio.onended = () => {
-                            // Loop logic handles this, but fair fallback
-                            audio.currentTime = 0;
-                            audio.play();
+                        // Correct loop fallback
+                        previewAudio.onended = () => {
+                            previewAudio.currentTime = 0;
+                            previewAudio.play();
                         };
                     }
                 });
