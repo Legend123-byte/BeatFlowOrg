@@ -1,7 +1,6 @@
 // State
 let currentPlaylist = [];
 let currentSongIndex = 0;
-let isPlaying = false;
 let audio = new Audio();
 audio.preload = "auto";
 let previewAudio = null;
@@ -350,6 +349,8 @@ function setupEventListeners() {
 
     // Audio Events
     audio.addEventListener('timeupdate', updateProgress);
+    audio.addEventListener("play", updatePlayButton);
+    audio.addEventListener("pause", updatePlayButton);
     audio.addEventListener('loadedmetadata', () => {
         if (player.totalTime) player.totalTime.innerText = formatTime(audio.duration);
         if (typeof updateMiniPlayerUI === 'function') updateMiniPlayerUI();
@@ -1681,42 +1682,80 @@ function playSong(song) {
 
 function togglePlay() {
     if (!audio.src) return;
-    if (audio.paused) {
-        audio.play();
-        isPlaying = true;
 
+    if (audio.paused) {
+        audio.play().catch(err => console.log(err));
     } else {
         audio.pause();
-        isPlaying = false;
     }
-    updatePlayButton();
 }
 
+// function updatePlayButton() {
+//     const miniBtn = document.getElementById('mini-play-btn');
+//     if (isPlaying) {
+//         if (player.playBtn) player.playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+//         if (miniBtn) miniBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+//         if (player.video) player.video.play().catch(e => console.log('Video play error', e));
+
+//         const rsVideo = document.getElementById('rs-loop-video');
+//         if (rsVideo) rsVideo.play().catch(e => console.error(e));
+//     } else {
+//         if (player.playBtn) player.playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+//         if (miniBtn) miniBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+//         if (player.video) player.video.pause();
+
+//         const rsVideo = document.getElementById('rs-loop-video');
+//         if (rsVideo) rsVideo.pause();
+//     }
+
+//     // Sync Mobile Play Button
+//     const mobilePlayBtn = document.getElementById('mobile-play-btn');
+//     if (mobilePlayBtn) {
+//         mobilePlayBtn.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+//     }
+// }
 function updatePlayButton() {
+
     const miniBtn = document.getElementById('mini-play-btn');
-    if (isPlaying) {
-        if (player.playBtn) player.playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-        if (miniBtn) miniBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-        if (player.video) player.video.play().catch(e => console.log('Video play error', e));
+    const mobilePlayBtn = document.getElementById('mobile-play-btn');
+    const rsVideo = document.getElementById('rs-loop-video');
 
-        const rsVideo = document.getElementById('rs-loop-video');
-        if (rsVideo) rsVideo.play().catch(e => console.error(e));
-    } else {
-        if (player.playBtn) player.playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-        if (miniBtn) miniBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-        if (player.video) player.video.pause();
+    const playing = !audio.paused;   // 🔥 REAL STATE
 
-        const rsVideo = document.getElementById('rs-loop-video');
-        if (rsVideo) rsVideo.pause();
+    // Main Player
+    if (player.playBtn) {
+        player.playBtn.innerHTML = playing
+            ? '<i class="fa-solid fa-pause"></i>'
+            : '<i class="fa-solid fa-play"></i>';
     }
 
-    // Sync Mobile Play Button
-    const mobilePlayBtn = document.getElementById('mobile-play-btn');
+    // Mini Player
+    if (miniBtn) {
+        miniBtn.innerHTML = playing
+            ? '<i class="fa-solid fa-pause"></i>'
+            : '<i class="fa-solid fa-play"></i>';
+    }
+
+    // Mobile Button
     if (mobilePlayBtn) {
-        mobilePlayBtn.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+        mobilePlayBtn.innerHTML = playing
+            ? '<i class="fa-solid fa-pause"></i>'
+            : '<i class="fa-solid fa-play"></i>';
+    }
+
+    // Video Sync
+    if (player.video) {
+        playing
+            ? player.video.play().catch(() => { })
+            : player.video.pause();
+    }
+
+    if (rsVideo) {
+        playing
+            ? rsVideo.play().catch(() => { })
+            : rsVideo.pause();
     }
 }
-
 // Update Player and Right Side Canvas
 // Update Player and Right Side Canvas
 // Update Player and Right Side Canvas
@@ -1848,7 +1887,7 @@ function updateMobilePlayerUI(song) {
     if (mobileArtist) mobileArtist.innerText = song.artist;
 
     if (mobilePlayBtn) {
-        mobilePlayBtn.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+        mobilePlayBtn.innerHTML = !audio.paused ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
     }
 
     if (mobileLikeBtn) {
@@ -2366,7 +2405,7 @@ function loadPlayerState() {
 
         updatePlayerUI(song);
 
-        isPlaying = false;
+
         updatePlayButton();
 
     } catch (e) {
@@ -2849,11 +2888,7 @@ const Visualizer = {
                         // 🛑 STOP MAIN PLAYER
                         if (!audio.paused) {
                             audio.pause();
-                            isPlaying = false;
-
-                            if (player.playBtn) {
-                                player.playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-                            }
+                            updatePlayButton();
                         }
 
                         // Stop previous preview audio
