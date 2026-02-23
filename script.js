@@ -54,6 +54,127 @@ function toggleLike(song) {
     updateLikeButtons(song.id);
 }
 
+// Recently Played State
+let recentlyPlayed = JSON.parse(localStorage.getItem('neonRecentlyPlayed')) || [];
+
+function addToRecentlyPlayed(item) {
+    if (!item || !item.id) return;
+
+    // Avoid duplicates - remove if exists
+    const index = recentlyPlayed.findIndex(i => i.id === item.id);
+    if (index > -1) {
+        recentlyPlayed.splice(index, 1);
+    }
+
+    // Add to front
+    recentlyPlayed.unshift(item);
+
+    // Limit to 20
+    if (recentlyPlayed.length > 20) {
+        recentlyPlayed.pop();
+    }
+
+    localStorage.setItem('neonRecentlyPlayed', JSON.stringify(recentlyPlayed));
+    renderRecentlyPlayed();
+}
+
+function renderRecentlyPlayed() {
+    const grid = document.getElementById('recent-played-grid');
+    const section = document.getElementById('recently-played-section');
+
+    if (!grid || !section) return;
+
+    // Data Hydration & Cleaning Strategy:
+    // 1. Map current history items to their latest source in 'songs' or 'albums'
+    // 2. Filter out items that no longer exist or are invalid
+    let cleanedHistory = [];
+    let hasChanges = false;
+
+    recentlyPlayed.forEach(item => {
+        if (!item || !item.id) {
+            hasChanges = true;
+            return;
+        }
+
+        // Try to find the fresh object from source of truth
+        let freshItem = null;
+
+        // Check if it's a song
+        const songMatch = typeof songs !== 'undefined' ? songs.find(s => s.id === item.id) : null;
+        if (songMatch) {
+            freshItem = songMatch;
+        } else {
+            // Check if it's an album
+            const albumMatch = typeof albums !== 'undefined' ? albums.find(a => a.id === item.id) : null;
+            if (albumMatch) {
+                freshItem = albumMatch;
+            }
+        }
+
+        // Use fresh item if found, otherwise check if the existing item is valid enough to keep
+        // If it's not found in source (e.g. deleted dummy album), we DROP it.
+        if (freshItem) {
+            // Check if we need to update the stored copy
+            if (JSON.stringify(item) !== JSON.stringify(freshItem)) {
+                hasChanges = true;
+            }
+            cleanedHistory.push(freshItem);
+        } else {
+            // Item not found in data.js (e.g. was a deleted dummy album)
+            hasChanges = true;
+        }
+    });
+
+    // Update state and storage if we cleaned anything
+    if (hasChanges) {
+        recentlyPlayed = cleanedHistory;
+        localStorage.setItem('neonRecentlyPlayed', JSON.stringify(recentlyPlayed));
+    }
+
+    if (recentlyPlayed.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    grid.innerHTML = '';
+
+    recentlyPlayed.forEach(item => {
+        // Determine type for click action
+        // Inferred type based on properties if not explicit
+        const type = item.type || (item.songs ? 'Album' : 'Song');
+
+        let clickHandler;
+        if (type === 'Album') {
+            clickHandler = () => openAlbum(item);
+        } else if (type === 'Artist') {
+            clickHandler = () => openArtistPage(item.name);
+        } else {
+            // Song
+            clickHandler = () => {
+                currentPlaylist = [item];
+                currentSongIndex = 0;
+                playSong(item);
+            };
+        }
+
+        const card = createCard(
+            item.title || item.name,
+            item.artist || 'Artist',
+            item.cover || item.image,
+            clickHandler,
+            item,
+            type.toLowerCase()
+        );
+
+        // Adjust card style for carousel if needed
+        card.style.minWidth = '150px';
+
+        grid.appendChild(card);
+    });
+}
+
+
 function isLiked(songId) {
     return likedSongs.some(s => s.id === songId);
 }
@@ -97,6 +218,18 @@ function setupEventListeners() {
     if (player.playBtn) player.playBtn.addEventListener('click', togglePlay);
     if (player.nextBtn) player.nextBtn.addEventListener('click', playNext);
     if (player.prevBtn) player.prevBtn.addEventListener('click', playPrev);
+
+    // Media Session API for background playback
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', () => {
+            if (audio.paused) togglePlay();
+        });
+        navigator.mediaSession.setActionHandler('pause', () => {
+            if (!audio.paused) togglePlay();
+        });
+        navigator.mediaSession.setActionHandler('previoustrack', playPrev);
+        navigator.mediaSession.setActionHandler('nexttrack', playNext);
+    }
 
     // Mini Next Button
     const miniNextBtn = document.getElementById('mini-next-btn');
@@ -395,6 +528,45 @@ function setupEventListeners() {
     }
 
     renderPlaylists();
+
+    // Show All Recently Played
+    const showAllRecentBtn = document.getElementById('show-all-recent');
+    if (showAllRecentBtn) {
+        showAllRecentBtn.addEventListener('click', () => {
+            showLibrary('history');
+        });
+    }
+
+    // Show All Made For You
+    const showAllMadeForYouBtn = document.getElementById('show-all-made-for-you');
+    if (showAllMadeForYouBtn) {
+        showAllMadeForYouBtn.addEventListener('click', () => {
+            // Made For You shows albums, so redirect to Albums tab in Library
+            showLibrary('albums');
+        });
+    }
+
+    // Show All Popular Artists
+    const showAllArtistsBtn = document.getElementById('show-all-artists');
+    if (showAllArtistsBtn) {
+        showAllArtistsBtn.addEventListener('click', () => {
+            showLibrary('artists');
+        });
+    }
+
+    // Recently Played Scroll Buttons
+    const recentGrid = document.getElementById('recent-played-grid');
+    const recentPrev = document.getElementById('recent-prev');
+    const recentNext = document.getElementById('recent-next');
+
+    if (recentGrid && recentPrev && recentNext) {
+        recentPrev.addEventListener('click', () => {
+            recentGrid.scrollBy({ left: -recentGrid.clientWidth / 2, behavior: 'smooth' });
+        });
+        recentNext.addEventListener('click', () => {
+            recentGrid.scrollBy({ left: recentGrid.clientWidth / 2, behavior: 'smooth' });
+        });
+    }
 }
 
 // Browse View Logic
@@ -466,11 +638,25 @@ function setupNavigation() {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const target = link.dataset.target;
-            showView(target);
+
+            // If navigating to Library (dashboard), reset to default view
+            if (target === 'dashboard') {
+                showLibrary();
+            } else {
+                showView(target);
+            }
 
             // Active State
             document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            // Also need to handle mobile bottom nav items which might not have .menu-item class or might be different
+            // But preserving existing logic for .menu-item
             if (link.classList.contains('menu-item')) link.classList.add('active');
+
+            // Handle bottom nav active state if needed (usually handled by styles or separate logic, but ensuring consistency)
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.target === target) btn.classList.add('active');
+            });
         });
     });
 }
@@ -557,6 +743,65 @@ function createCard(title, subtitle, image, onClick, itemData = null, type = 'ge
     return div;
 }
 
+// Helper to get Made For You albums with 24h rotation
+function getMadeForYouAlbums() {
+    const STORAGE_KEY = 'neonMadeForYou';
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+    try {
+        let storedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        let now = Date.now();
+
+        // Check if valid storage exists and is within 24 hours
+        if (storedData &&
+            storedData.timestamp &&
+            (now - storedData.timestamp < TWENTY_FOUR_HOURS) &&
+            storedData.albumIds &&
+            Array.isArray(storedData.albumIds) &&
+            storedData.albumIds.length > 0) {
+
+            // Hydrate from IDs - ensure they still exist in current data
+            const hydrated = storedData.albumIds
+                .map(id => albums.find(a => a.id === id))
+                .filter(a => a && a.title && !a.title.includes('undefined'));
+
+            if (hydrated.length > 0) {
+                return hydrated;
+            }
+        }
+
+        // Generate New List if expired or invalid
+        // 1. Filter valid albums (respecting selected languages if possible)
+        let pool = albums.filter(a => a && a.id && a.title && a.cover && !a.title.includes('undefined'));
+
+        // Optional: Filter by selected languages for better relevance
+        if (selectedLanguages && selectedLanguages.length > 0) {
+            const langPool = pool.filter(a => selectedLanguages.includes(a.language));
+            if (langPool.length >= 5) { // Only use language filter if we have enough albums
+                pool = langPool;
+            }
+        }
+
+        // 2. Shuffle
+        const shuffled = [...pool].sort(() => 0.5 - Math.random());
+
+        // 3. Pick max 10 (User requested max 10)
+        const selected = shuffled.slice(0, 10);
+
+        // 4. Save
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            timestamp: now,
+            albumIds: selected.map(a => a.id)
+        }));
+
+        return selected;
+    } catch (e) {
+        console.error("Error in getMadeForYouAlbums", e);
+        // Fallback
+        return albums.slice(0, 10);
+    }
+}
+
 function renderHome() {
 
     // =========================
@@ -567,28 +812,18 @@ function renderHome() {
 
     grid.innerHTML = '';
 
-    // Filter albums by selected languages (if album has language property)
-    let filteredAlbums = albums.filter(album =>
-        selectedLanguages.length === 0 ||
-        selectedLanguages.includes(album.language)
-    );
+    // Use the 24h rotation helper
+    const madeForYouAlbums = getMadeForYouAlbums();
 
-    // Fallback if no match
-    if (filteredAlbums.length === 0) {
-        filteredAlbums = albums.slice(0, 12);
-    }
-
-    filteredAlbums.slice(0, 12).forEach(album => {
-
+    madeForYouAlbums.forEach(album => {
         const card = createCard(
             album.title,
             album.artist,
             album.cover,
-            () => openAlbum(album),  // 👈 open album page
+            () => openAlbum(album),
             album,
             'album'
         );
-
         grid.appendChild(card);
     });
 
@@ -621,6 +856,53 @@ function renderHome() {
 
 
 
+    // Helper to get Popular Artists with 24h rotation
+    function getPopularArtists() {
+        const STORAGE_KEY = 'neonPopularArtists';
+        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+        try {
+            let storedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+            let now = Date.now();
+
+            // Check if valid storage exists
+            if (storedData &&
+                storedData.timestamp &&
+                (now - storedData.timestamp < TWENTY_FOUR_HOURS) &&
+                storedData.artistIds &&
+                Array.isArray(storedData.artistIds) &&
+                storedData.artistIds.length > 0) {
+
+                // Hydrate
+                const hydrated = storedData.artistIds
+                    .map(id => artists.find(a => a.id === id))
+                    .filter(a => a); // Filter nulls
+
+                if (hydrated.length > 0) {
+                    return hydrated;
+                }
+            }
+
+            // Generate New List
+            // 1. Shuffle all artists
+            const shuffled = [...artists].sort(() => 0.5 - Math.random());
+
+            // 2. Pick max 12
+            const selected = shuffled.slice(0, 12);
+
+            // 3. Save
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                timestamp: now,
+                artistIds: selected.map(a => a.id)
+            }));
+
+            return selected;
+        } catch (e) {
+            console.error("Error in getPopularArtists", e);
+            return artists.slice(0, 12);
+        }
+    }
+
     // =========================
     // 👩‍🎤 ARTIST CAROUSEL
     // =========================
@@ -628,7 +910,10 @@ function renderHome() {
     if (artistCarousel) {
         artistCarousel.innerHTML = '';
 
-        artists.forEach(artist => {
+        // Use 24h rotation helper
+        const popularArtists = getPopularArtists();
+
+        popularArtists.forEach(artist => {
             const div = document.createElement('div');
             div.className = 'artist-card';
 
@@ -657,6 +942,11 @@ function renderHome() {
     if (window.Visualizer && typeof window.Visualizer.renderDeepDives === 'function') {
         window.Visualizer.renderDeepDives();
     }
+
+    // =========================
+    // 🕒 RECENTLY PLAYED
+    // =========================
+    renderRecentlyPlayed();
 }
 
 
@@ -754,6 +1044,45 @@ function showLibrary(filter) {
             const card = createCard(album.title, album.artist, album.cover, () => openAlbum(album), album, 'album');
             grid.appendChild(card);
         });
+    } else if (filter === 'history') {
+        const titleText = title.querySelector('span') || title;
+        if (title.tagName === 'DIV') {
+            title.querySelector('span').innerText = 'Recently Played';
+            title.querySelector('i').style.display = 'none';
+            title.onclick = null;
+        } else {
+            title.innerText = 'Recently Played';
+        }
+
+        if (recentlyPlayed.length === 0) {
+            grid.innerHTML = '<div style="color:#888; grid-column: 1/-1; text-align:center; padding-top:50px;">No recently played history.</div>';
+        } else {
+            recentlyPlayed.forEach(item => {
+                const type = item.type || (item.songs ? 'Album' : 'Song');
+                let clickHandler;
+                if (type === 'Album') {
+                    clickHandler = () => openAlbum(item);
+                } else if (type === 'Artist') {
+                    clickHandler = () => openArtistPage(item.name);
+                } else {
+                    clickHandler = () => {
+                        currentPlaylist = [item];
+                        currentSongIndex = 0;
+                        playSong(item);
+                    };
+                }
+
+                const card = createCard(
+                    item.title || item.name,
+                    item.artist || 'Artist',
+                    item.cover || item.image,
+                    clickHandler,
+                    item,
+                    type.toLowerCase()
+                );
+                grid.appendChild(card);
+            });
+        }
     } else {
         // "Recently Added" View
         const titleText = title.querySelector('span');
@@ -1297,6 +1626,18 @@ function playSong(song) {
         currentSongIndex = 0;
     }
 
+    // Update Media Session Metadata
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: song.title || 'Unknown Title',
+            artist: song.artist || 'Unknown Artist',
+            album: song.album || 'Neon Music',
+            artwork: [
+                { src: song.cover || song.image || 'default-cover.png', sizes: '512x512', type: 'image/jpeg' }
+            ]
+        });
+    }
+
     audio.play().catch(error => {
         console.error("Playback failed:", error);
     });
@@ -1304,6 +1645,7 @@ function playSong(song) {
     updatePlayerUI(song);
     updatePlayButton();
     savePlayerState();
+    addToRecentlyPlayed(song);
 
     // Auto-open sidebar
     const sidebar = document.getElementById('right-sidebar');
