@@ -100,7 +100,11 @@
 
 
 
-                <div class="section-title" style="margin-top: 40px;">Made For You</div>
+                <div class="section-header">
+                    <div class="section-title">Made For You</div>
+                    <button id="show-all-made-for-you" class="section-link-btn">Show All</button>
+                </div>
+
                 <div class="carousel-wrapper" style="position: relative;">
                     <button class="scroll-btn left" id="featured-prev"><i class="fa-solid fa-chevron-left"></i></button>
                     <div class="card-carousel" id="featured-grid">
@@ -110,12 +114,34 @@
                             class="fa-solid fa-chevron-right"></i></button>
                 </div>
 
+                <!-- Recently Played Section -->
+                <div id="recently-played-section" style="display: none;">
+                    <div class="section-header">
+                        <div class="section-title">Recently Played</div>
+                        <button id="show-all-recent" class="section-link-btn">Show All</button>
+                    </div>
+                    <div class="carousel-wrapper" style="position: relative;">
+                        <button class="scroll-btn left" id="recent-prev"><i
+                                class="fa-solid fa-chevron-left"></i></button>
+                        <div class="card-carousel" id="recent-played-grid"
+                            style="display: flex; overflow-x: auto; scroll-behavior: smooth; gap: 20px; padding-bottom: 10px; scrollbar-width: none;">
+                            <!-- JS Injected -->
+                        </div>
+                        <button class="scroll-btn right" id="recent-next"><i
+                                class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+
                 <div class="section-title" style="margin-top: 40px;">Popular Playlists</div>
                 <div class="card-grid" id="popular-playlists">
                     <!-- JS Injected -->
                 </div>
 
-                <div class="section-title" style="margin-top: 40px;">Popular Artists</div>
+                <div class="section-header">
+                    <div class="section-title">Popular Artists</div>
+                    <button id="show-all-artists" class="section-link-btn">Show All</button>
+                </div>
                 <div class="carousel-wrapper" style="position: relative;">
                     <button class="scroll-btn left" id="artist-prev"><i class="fa-solid fa-chevron-left"></i></button>
                     <div class="carousel-container" id="artist-carousel">
