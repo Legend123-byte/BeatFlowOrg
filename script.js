@@ -1618,64 +1618,54 @@ function openDeepDivePage(data) {
     });
 }
 
-// Playback Logic
 function playSong(song) {
-    // Check if song is in current playlist, if not, make a single song playlist
-    // For simplicity, we just play it.
 
     audio.src = song.src;
     audio.dataset.currentSongId = song.id;
 
-    // Fix: Update global state if not already matching (e.g. playing from Search)
     const knownIndex = currentPlaylist.findIndex(s => s.id === song.id);
+
     if (knownIndex !== -1) {
         currentSongIndex = knownIndex;
     } else {
-        // Song from search / outside current context -> Set as new context
         currentPlaylist = [song];
         currentSongIndex = 0;
     }
 
-    // Update Media Session Metadata
+    // Media Session
     if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
             title: song.title || 'Unknown Title',
             artist: song.artist || 'Unknown Artist',
             album: song.album || 'Neon Music',
             artwork: [
-                { src: song.cover || song.image || 'default-cover.png', sizes: '512x512', type: 'image/jpeg' }
+                {
+                    src: song.cover || song.image || 'default-cover.png',
+                    sizes: '512x512',
+                    type: 'image/jpeg'
+                }
             ]
         });
     }
 
-    const playPromise = audio.play();
+    audio.play()
+        .then(() => {
+            updatePlayButton();
+        })
+        .catch(error => {
+            console.error("Playback failed:", error);
+        });
 
-    if (playPromise !== undefined) {
-        playPromise
-            .then(() => {
-                isPlaying = true;
-                updatePlayButton();
-            })
-            .catch(error => {
-                console.error("Playback failed:", error);
-            });
-    }
-    isPlaying = true;
     updatePlayerUI(song);
-    updatePlayButton();
     savePlayerState();
     addToRecentlyPlayed(song);
 
-    // Auto-open sidebar
     const sidebar = document.getElementById('right-sidebar');
     if (sidebar && sidebar.classList.contains('collapsed')) {
         sidebar.classList.remove('collapsed');
     }
 
-    // Set Visualizer Mode
-    if (typeof Visualizer !== 'undefined') {
-        Visualizer.setMode(song.genre);
-    } else if (window.Visualizer) {
+    if (window.Visualizer) {
         window.Visualizer.setMode(song.genre);
     }
 }
@@ -1690,30 +1680,6 @@ function togglePlay() {
     }
 }
 
-// function updatePlayButton() {
-//     const miniBtn = document.getElementById('mini-play-btn');
-//     if (isPlaying) {
-//         if (player.playBtn) player.playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-//         if (miniBtn) miniBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-//         if (player.video) player.video.play().catch(e => console.log('Video play error', e));
-
-//         const rsVideo = document.getElementById('rs-loop-video');
-//         if (rsVideo) rsVideo.play().catch(e => console.error(e));
-//     } else {
-//         if (player.playBtn) player.playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-//         if (miniBtn) miniBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-//         if (player.video) player.video.pause();
-
-//         const rsVideo = document.getElementById('rs-loop-video');
-//         if (rsVideo) rsVideo.pause();
-//     }
-
-//     // Sync Mobile Play Button
-//     const mobilePlayBtn = document.getElementById('mobile-play-btn');
-//     if (mobilePlayBtn) {
-//         mobilePlayBtn.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
-//     }
-// }
 function updatePlayButton() {
 
     const miniBtn = document.getElementById('mini-play-btn');
@@ -2924,7 +2890,7 @@ const Visualizer = {
                                 previewAudio.play();
                                 video.play();
                             }
-                        }, 250);
+                        }, 1000);
 
                         previewBtn.classList.add('active');
 
@@ -3254,6 +3220,7 @@ async function toggleMiniPlayer() {
                 </div>
             </div>
         `;
+
 
         // Event Listeners within PiP
         // Play/Prev/Next
